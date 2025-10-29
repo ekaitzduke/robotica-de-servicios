@@ -1,11 +1,15 @@
 # Robótica de servicios
 
 ## Comandos para conectar al repositorio
-Conectarse al repositorio:
-    `git remote add origin https://github.com/ekaitzduke/robotica-de-servicios`
+- Conectarse al repositorio:
+    ```powershell
+    git remote add origin https://github.com/ekaitzduke/robotica-de-servicios
+    ```
 
-Descargarse el proyecto (solo la primera vez):
-    `git clone https://github.com/ekaitzduke/robotica-de-servicios`
+- Descargarse el proyecto (solo la primera vez):
+    ``` powershell
+    git clone https://github.com/ekaitzduke/robotica-de-servicios
+    ```
 
 
 ## ToDo:
