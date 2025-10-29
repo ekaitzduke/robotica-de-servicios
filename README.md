@@ -3,12 +3,12 @@
 ## Comandos para conectar al repositorio
 - Conectarse al repositorio:
     ```powershell
-    #git remote add origin https://github.com/ekaitzduke/robotica-de-servicios
+    # git remote add origin https://github.com/ekaitzduke/robotica-de-servicios
     ```
 
 - Descargarse el proyecto (solo la primera vez):
     ``` powershell
-    #git clone https://github.com/ekaitzduke/robotica-de-servicios
+    # git clone https://github.com/ekaitzduke/robotica-de-servicios
     ```
 
 
