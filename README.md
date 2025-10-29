@@ -1,7 +1,8 @@
 # Robótica de servicios
 
 ## Comsndos para conectar al repositorio
-    - 
+    - Conectarse al repositorio:
+    `git remote add origin https://github.com/ekaitzduke/robotica-de-servicios` 
 
 ## ToDo:
     - MÁQUINA DE ESTADOS
