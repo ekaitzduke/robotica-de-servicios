@@ -46,11 +46,13 @@ FONTCOLOR = (255, 255, 0) # Color of the font used below the screens
 # Rectangle outlier colors for the state of the screens (1 -> Selected to change, 2 -> Matched, 3 -> Half the timer has passed since match)
 DISPLAYSELCOLOR = [(50,82,123),(35,101,51),[253,216,8]]
 
+# Color of the info text
+COLORINFOTEXT = (255, 255, 0)
 
 # Letters used to catch events (can be triggered with the mouse as well)
 DISPLAYUPDATEKEY = pygame.K_s # Change gesture with the live camera one of the selected screen of the display o zoomed mode
 CAMARACHANGEKEY = pygame.K_z # Change between normal and zoomed live camera mode
-DISPLAYSELECTKEYS = [pygame.K_1,pygame.K_2,pygame.K_3,pygame.K_4] # Select a screen on zoomed mode
+DISPLAYSELECTKEYS = [pygame.K_1,pygame.K_2,pygame.K_3,pygame.K_4,pygame.K_5,pygame.K_6,pygame.K_7,pygame.K_8] # Select a screen on zoomed mode
 
 DIRTEXT = ["Up", "Right", "Down", "Left"] # Orders to send when the corresponding screen match
 
@@ -282,14 +284,15 @@ def getFingerstrfromImage(image,hands):
 
 
 
-def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,recognizer):
+def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,debug,recognizer):
 
     timer = TIMER*GAMEFPS
 
     running = True
 
     # Capture the video and read the first frame
-    video = cv2.VideoCapture(cameraport)
+    if not debug:
+        video = cv2.VideoCapture(cameraport)
 
     # ADDED: M
     mp_drawing = mp.solutions.drawing_utils
@@ -313,13 +316,22 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,rec
     screen = pygame.display.set_mode(SCREENSIZE)
     pygame.display.set_caption("Camera Tests")
 
+    # Prepare info text for the game
+    fuente = pygame.font.Font(None, 25)
+    infotexts = [fuente.render("To modify possible gestures to match use keybind z or click on the live feed", True, COLORINFOTEXT),\
+                 fuente.render("Same keybind to return to the main app (can take some time or fail, so retry it)", True, COLORINFOTEXT),
+                 fuente.render("While changing gestures, use keybinds 1-n (n) or click on the screen to select it", True, COLORINFOTEXT), \
+                 fuente.render("Once selected, press s to save current live feed as gesture (see text changing)", True, COLORINFOTEXT), \
+                 fuente.render("Quit the app with q or close the window", True, COLORINFOTEXT)]
+
+
     # Create live camera and static display panel
     camara = ScreenDisplay(CAMARAINITIALPOS,CAMARAINITIALDIM)
     camaraPanel = ScreenDisplayPanel(DISPLAYINITIALPOS,DISPLAYINITIALDIM,DISPLAYDISTRIB,DISPLAYOFFSET,
                                      DISPLAYSELCOLOR,text=(["Fail",DIRTEXT[0]],["Fail",DIRTEXT[1]],["Fail",DIRTEXT[2]],["Fail",DIRTEXT[3]]))
 
     # Update display with stored images
-    for i in range(4):
+    for i in range(DISPLAYDISTRIB[0]*DISPLAYDISTRIB[1]):
         if not gathersamples:
             if os.path.exists(f'{displaypath}/{i}.{imgformat}'):
                 image2 = cv2.imread(f'{displaypath}/{i}.{imgformat}')
@@ -345,7 +357,8 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,rec
     # Pygame flow
     while running:
 
-        success,image = video.read()
+        if not debug:
+            success,image = video.read()
 
         # Event processing
         for event in pygame.event.get():
@@ -413,12 +426,16 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,rec
         camara.draw(screen)
         camaraPanel.draw(screen)
 
+        # Print info for the user to know keybinds and controls
+        for i in range(len(infotexts)):
+            screen.blit(infotexts[i], [5, SCREENSIZE[1] - 30*(5-i)])
+
         # Refresh screen and game
         pygame.display.flip()
 
         if timer > 0:
             timer -= 1
-        elif camara.dim[0] == CAMARAINITIALDIM[0] and camara.dim[1] == CAMARAINITIALDIM[1]:
+        elif camara.dim[0] == CAMARAINITIALDIM[0] and camara.dim[1] == CAMARAINITIALDIM[1] and not debug:
 
             if usefinger:
                 curr_gesture = getFingerstrfromImage(image,hands)
@@ -442,7 +459,8 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,rec
         reloj.tick(GAMEFPS)
 
     # Uninitialize pygame modules
-    video.release()
+    if not debug:
+        video.release()
     pygame.quit()
 
 
@@ -458,6 +476,8 @@ if __name__ == "__main__":
     parser.add_argument('--maxsamples', '-maxs', type=int, default = 8, help = 'Max samples to gather (<= 0 will not put a limit)')
 
     parser.add_argument('--verbose','-v', action = 'store_true', help = 'Show information on terminal')
+    parser.add_argument('--debug','-d', action = 'store_true', help = 'Debug mode (deactivate live feed)')
+
 
     args = parser.parse_args()
 
@@ -517,4 +537,4 @@ if __name__ == "__main__":
     # if args.gathersamples:
     #     images = gs.takesamples(args.outputpath,args.saveframes,args.saveformat,args.cameraport,args.maxsamples,args.verbose+1,recognizer)
     
-    testgame(args.outputpath,args.saveformat,args.cameraport,args.gathersamples,images,args.usefinger,recognizer)
+    testgame(args.outputpath,args.saveformat,args.cameraport,args.gathersamples,images,args.usefinger,args.debug,recognizer)
