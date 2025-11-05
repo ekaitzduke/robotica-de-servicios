@@ -13,11 +13,9 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# ADDED M:
-from math import acos, degrees
-import gesture_control as gc
-import numpy as np
-##########
+from math import acos, degrees # Used for thumb angle calculation 
+import gesture_control as gc   # Some functions to get finger, palm and centroid coordinates given landmarks
+import numpy as np             # To use arrays and linalg.form on finger calculation
 
 
 SCREENSIZE = (1000,600)  # Screen size of the game
@@ -63,12 +61,11 @@ MPGESID = ["None", "Pointing_Up", "Thumb_Up", "Closed_Fist", "Thumb_Down", "Open
 # Shortened labels so the font below the screen stays the same and reduced length
 GESTEXT = ["Fail", "None", "Pont", "ThUp", "Fist", "ThDw", "Palm", "Vict", "Love"]
 
-# ADDED M: Finger Index References
+# Finger Index References
 THUMB_POINTS = [1,2,4]
 PALM_POINTS = [0,1,2,5,9,13,17]
 FINGERTIPS_POINTS = [8,12,16,20]
 FINGERBASE_POINTS = [6,10,14,18]
-#########
 
 
 # Live camera screen class (Also used for the individual screens of the display) located on position (pos) with a certain dimension (dim)
@@ -230,7 +227,7 @@ def getgesture(image,recognizer):
                     return GESTEXT[i+1]
     return GESTEXT[0]
 
-# ADDED M:
+
 # Get finger string (decimal value as string of the binary array. A lifted finger is set as 1 and the order starts from thumb to pinky)
 # Uses landmarks from a mediapipe hand detection (mp) and screen dimensions (screendim) to get coordinates for palm, thumb, tips and base fingers
 def getfinger(screendim,lm):
@@ -300,11 +297,6 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
     if not debug:
         video = cv2.VideoCapture(cameraport)
 
-    # ADDED: M
-    # mp_drawing = mp.solutions.drawing_utils
-    # mp_hands = mp.solutions.hands
-    # mp_drawing_styles = mp.solutions.drawing_styles
-
     # Initialize the hand detector of mediapipe
     hands = mp.solutions.hands.Hands(
         static_image_mode = True, 
@@ -313,7 +305,6 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
         min_tracking_confidence = 0.8,
         model_complexity = 1
     )
-    ###########
 
     # Initialize pygame modules and get the clock to set fps
     pygame.init()
@@ -352,16 +343,13 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
             image2 = None
         camaraPanel.update(image2,SCREENSIZE,i)
 
-        # ADDED M:
         # Assign a gesture or finger state to the image
         if usefinger:
             camaraPanel.updatetext(getFingerstrfromImage(image2,hands),i)
-        
-        ########
         else:
             camaraPanel.updatetext(getgesture(image2,recognizer),i)
 
-    # ADDED M: To make app working without live feed
+    # To make app working without live feed
     if debug:
         success = True
         image = None
@@ -501,52 +489,6 @@ if __name__ == "__main__":
     base_options = python.BaseOptions(model_asset_path='gesture_recognizer.task')
     options = vision.GestureRecognizerOptions(base_options=base_options)
     recognizer = vision.GestureRecognizer.create_from_options(options)
-
-
-    # ADDED: M: TEMPORARY
-    mp_drawing = mp.solutions.drawing_utils
-    mp_hands = mp.solutions.hands
-    mp_drawing_styles = mp.solutions.drawing_styles
-
-    hands = mp_hands.Hands(
-        static_image_mode = True, 
-        max_num_hands = 1,
-        min_detection_confidence = 0.8,
-        min_tracking_confidence = 0.8,
-        model_complexity = 1
-    )
-
-    for i in range(6):
-        image = None
-        if os.path.exists(f'{args.outputpath}/{i}.{args.saveformat}'):
-            image = cv2.imread(f'{args.outputpath}/{i}.{args.saveformat}')
-        
-        if image is not None:
-            image = cv2.flip(image, 1)
-            image_rgb = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
-            results = hands.process(image_rgb)
-            result_finger = []
-            if results.multi_hand_landmarks:
-                for lm in results.multi_hand_landmarks:
-                    mp_drawing.draw_landmarks(
-                        image, 
-                        lm, 
-                        mp_hands.HAND_CONNECTIONS,
-                        mp_drawing.DrawingSpec(color=(0,255,0), thickness=2, circle_radius=2),
-                        mp_drawing.DrawingSpec(color=(255,0,0), thickness=2, circle_radius=2),
-                    )
-                    fingers = getfinger(SCREENSIZE,lm)
-                    id = 0
-                    for i in range(len(fingers)):
-                        if fingers[i]:
-                            id += 2**i
-                    result_finger.append(str(id))
-                    #cv2.imshow("ImageTest",image)
-                    #cv2.waitKey(0)
-
-            #print(result_finger[0])
-
-    ##########
 
 
     images = None
