@@ -28,18 +28,18 @@ DELAYFRACTION = 0.5 # Fraction of the timer expected to pass to go from state 2 
 
 
 # Live camera positions and dimensions when normal and zoomed (Zoomed means updating gestures matchs)
-CAMARAINITIALPOS = (800,450)
-CAMARAINITIALDIM = (200,150)
+CAMARAINITIALPOS = (750,450)
+CAMARAINITIALDIM = (220,130)
 CAMARAZOOMEDPOS = (0,0)
 CAMARAZOOMEDDIM = (600,300)
 
 
 # Positions and dimensions of the static displays of the gesture to match with the camera
-DISPLAYINITIALPOS = (800,50)
+DISPLAYINITIALPOS = (750,20)
 DISPLAYINITIALDIM = (100,50)
 
-DISPLAYDISTRIB = (1,4) # Distribution of the displays (Rows and columns are inverted for pygame)
-DISPLAYOFFSET = (0,50) # Space between screens of the display
+DISPLAYDISTRIB = (2,4) # Distribution of the displays (Rows and columns are inverted for pygame)
+DISPLAYOFFSET = (20,50) # Space between screens of the display
 FILLERCOLOR = (255,255,255) # Color used to fill screen when no image is given
 FONTCOLOR = (255, 255, 0) # Color of the font used below the screens
 
@@ -53,6 +53,7 @@ COLORINFOTEXT = (255, 255, 0)
 DISPLAYUPDATEKEY = pygame.K_s # Change gesture with the live camera one of the selected screen of the display o zoomed mode
 CAMARACHANGEKEY = pygame.K_z # Change between normal and zoomed live camera mode
 DISPLAYSELECTKEYS = [pygame.K_1,pygame.K_2,pygame.K_3,pygame.K_4,pygame.K_5,pygame.K_6,pygame.K_7,pygame.K_8] # Select a screen on zoomed mode
+SHUTDOWNKEY = pygame.K_q # Quit the game
 
 DIRTEXT = ["Up", "Right", "Down", "Left"] # Orders to send when the corresponding screen match
 
@@ -215,7 +216,8 @@ class ScreenDisplayPanel():
             screenNum = min(screenNum,len(self.states))
             self.states[screenNum] = statevalue
 
-
+# Get gesture string from an image (expected as selfie) with a gesture model (recognizer) of mediapipe
+# (Uses MACRO values MPGESID and GESTEXT to rename the gesture. Search them for more info)
 def getgesture(image,recognizer):
     if image is not None:
         image = cv2.flip(image, 1)
@@ -229,21 +231,24 @@ def getgesture(image,recognizer):
     return GESTEXT[0]
 
 # ADDED M:
+# Get finger string (decimal value as string of the binary array. A lifted finger is set as 1 and the order starts from thumb to pinky)
+# Uses landmarks from a mediapipe hand detection (mp) and screen dimensions (screendim) to get coordinates for palm, thumb, tips and base fingers
 def getfinger(screendim,lm):
 
+    # Get coordinates
     coordinates_thumb = gc.getCoordinates(screendim[0], screendim[1], THUMB_POINTS, lm)
     coordinates_palm = gc.getCoordinates(screendim[0], screendim[1], PALM_POINTS, lm)
     coordinates_ft = gc.getCoordinates(screendim[0], screendim[1], FINGERTIPS_POINTS, lm)
     coordinates_fb = gc.getCoordinates(screendim[0], screendim[1], FINGERBASE_POINTS, lm)
 
-    # PULGAR
+    # THUMB
     p1, p2, p3, l1, l2, l3 = gc.getTriangle(coordinates_thumb)
     cos_angle = (l1**2 + l3**2 - l2**2) / (2 * l1 * l3)
     cos_angle = max(-1, min(1, cos_angle))  # clamp para evitar errores
     thumb_angle = degrees(acos(cos_angle))
     thumb_extened = thumb_angle > 160
                     
-    # RESTO DE DEDOS
+    # OTHER FINGERS
     nx, ny = gc.palmCentroid (coordinates_palm)
     coordinates_centroid = np.array([nx, ny])
     coordinates_fb = np.array(coordinates_fb)
@@ -286,20 +291,22 @@ def getFingerstrfromImage(image,hands):
 
 def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,debug,recognizer):
 
+    # Timer (using frames as unit) to wait to start a recognition attempt (Does one, then resets)
     timer = TIMER*GAMEFPS
 
-    running = True
+    running = True # Flag to shutdown pygame once it's running
 
     # Capture the video and read the first frame
     if not debug:
         video = cv2.VideoCapture(cameraport)
 
     # ADDED: M
-    mp_drawing = mp.solutions.drawing_utils
-    mp_hands = mp.solutions.hands
-    mp_drawing_styles = mp.solutions.drawing_styles
+    # mp_drawing = mp.solutions.drawing_utils
+    # mp_hands = mp.solutions.hands
+    # mp_drawing_styles = mp.solutions.drawing_styles
 
-    hands = mp_hands.Hands(
+    # Initialize the hand detector of mediapipe
+    hands = mp.solutions.hands.Hands(
         static_image_mode = True, 
         max_num_hands = 1,
         min_detection_confidence = 0.8,
@@ -332,6 +339,8 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
 
     # Update display with stored images
     for i in range(DISPLAYDISTRIB[0]*DISPLAYDISTRIB[1]):
+
+        # Search the image as file (or used the gathered one) and load on a screen of the panel
         if not gathersamples:
             if os.path.exists(f'{displaypath}/{i}.{imgformat}'):
                 image2 = cv2.imread(f'{displaypath}/{i}.{imgformat}')
@@ -344,6 +353,7 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
         camaraPanel.update(image2,SCREENSIZE,i)
 
         # ADDED M:
+        # Assign a gesture or finger state to the image
         if usefinger:
             camaraPanel.updatetext(getFingerstrfromImage(image2,hands),i)
         
@@ -351,8 +361,10 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
         else:
             camaraPanel.updatetext(getgesture(image2,recognizer),i)
 
-    success = True
-    image = None
+    # ADDED M: To make app working without live feed
+    if debug:
+        success = True
+        image = None
 
     # Pygame flow
     while running:
@@ -433,8 +445,11 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
         # Refresh screen and game
         pygame.display.flip()
 
+        # Internal timer to avoid gesture/finger recognition each frame
         if timer > 0:
             timer -= 1
+
+        # Enact the detection once timer runs out (and not on debug mode)
         elif camara.dim[0] == CAMARAINITIALDIM[0] and camara.dim[1] == CAMARAINITIALDIM[1] and not debug:
 
             if usefinger:
@@ -450,7 +465,8 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
                     break
 
             timer = TIMER*GAMEFPS
-        
+
+        # Blink the selected gesture (After a fraction of the timer has passed)
         if timer < TIMER*GAMEFPS*DELAYFRACTION:
             for k in range(len(camaraPanel.displays)):
                 if camaraPanel.states[k] == 2:
