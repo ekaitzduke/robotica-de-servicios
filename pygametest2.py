@@ -472,9 +472,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Program to take frames from a camera in real-time.',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
     parser.add_argument('--gathersamples','-gs', action = 'store_true', help = 'Flag to start gathering samples from camera')
-    parser.add_argument('--outputpath', '-out', type=str, default = 'samples', help = 'Path to the folder to store frames')
+    parser.add_argument('--outputpath', '-out', type=str, default = 'Imagenes', help = 'Path to the folder to store frames')
     parser.add_argument('--saveframes', '-sfr', action = 'store_true', help = 'Save the frame on the outputpath')
-    parser.add_argument('--usefinger', '-ug', action = 'store_true', help = 'Use finger detection instead of gesture')
+    parser.add_argument('--usefinger', '-ug', action = 'store_false', help = 'Use finger detection instead of gesture')
     parser.add_argument('--cameraport', '-cp', type=int, default = 0, help = 'Camera port used')
     parser.add_argument('--saveformat', '-sf', type=str, default = 'jpg', help = 'Saved frames format')
     parser.add_argument('--maxsamples', '-maxs', type=int, default = 8, help = 'Max samples to gather (<= 0 will not put a limit)')
