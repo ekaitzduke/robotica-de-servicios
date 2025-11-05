@@ -1,0 +1,22 @@
+running egg_info
+writing ../../build/robot_camarero/robot_camarero.egg-info/PKG-INFO
+writing dependency_links to ../../build/robot_camarero/robot_camarero.egg-info/dependency_links.txt
+writing entry points to ../../build/robot_camarero/robot_camarero.egg-info/entry_points.txt
+writing requirements to ../../build/robot_camarero/robot_camarero.egg-info/requires.txt
+writing top-level names to ../../build/robot_camarero/robot_camarero.egg-info/top_level.txt
+reading manifest file '../../build/robot_camarero/robot_camarero.egg-info/SOURCES.txt'
+writing manifest file '../../build/robot_camarero/robot_camarero.egg-info/SOURCES.txt'
+running build
+running build_py
+copying robot_camarero/turte.py -> /home/mario/Documentos/Robotica de servicios/ros2_ws/build/robot_camarero/build/lib/robot_camarero
+running install
+running install_lib
+copying /home/mario/Documentos/Robotica de servicios/ros2_ws/build/robot_camarero/build/lib/robot_camarero/turte.py -> /home/mario/Documentos/Robotica de servicios/ros2_ws/install/robot_camarero/lib/python3.12/site-packages/robot_camarero
+byte-compiling /home/mario/Documentos/Robotica de servicios/ros2_ws/install/robot_camarero/lib/python3.12/site-packages/robot_camarero/turte.py to turte.cpython-312.pyc
+running install_data
+running install_egg_info
+removing '/home/mario/Documentos/Robotica de servicios/ros2_ws/install/robot_camarero/lib/python3.12/site-packages/robot_camarero-0.0.0-py3.12.egg-info' (and everything under it)
+Copying ../../build/robot_camarero/robot_camarero.egg-info to /home/mario/Documentos/Robotica de servicios/ros2_ws/install/robot_camarero/lib/python3.12/site-packages/robot_camarero-0.0.0-py3.12.egg-info
+running install_scripts
+Installing run_camarero script to /home/mario/Documentos/Robotica de servicios/ros2_ws/install/robot_camarero/lib/robot_camarero
+writing list of installed files to '/home/mario/Documentos/Robotica de servicios/ros2_ws/build/robot_camarero/install.log'

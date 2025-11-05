@@ -1,0 +1,2 @@
+[console_scripts]
+run_camarero = robot_camarero.turte:main
