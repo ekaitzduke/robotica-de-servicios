@@ -1,6 +1,5 @@
 
 # Packages to run pygames
-#
 import pygame
 # from pygame.locals import *
 
