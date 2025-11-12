@@ -42,7 +42,7 @@ FILLERCOLOR = (255,255,255) # Color used to fill screen when no image is given
 FONTCOLOR = (255, 255, 0) # Color of the font used below the screens
 
 # Rectangle outlier colors for the state of the screens (1 -> Selected to change, 2 -> Matched, 3 -> Half the timer has passed since match)
-DISPLAYSELCOLOR = [(50,82,123),(35,101,51),[253,216,8]]
+DISPLAYSELCOLOR = [(0,109,180),(0,191,0),[255,221,17]]
 
 # Color of the info text
 COLORINFOTEXT = (255, 255, 0)
@@ -124,7 +124,7 @@ class ScreenDisplay():
 # (selwidth expected as 1 integer > 0, no checks) (colors are expected to be RGB formatted) 
 # (text expected to be given on a list of 2 String lists)
 class ScreenDisplayPanel():
-    def __init__(self,pos,dim,size,offsets,colors,selwidth=2,states=[],text = []):
+    def __init__(self,pos,dim,size,offsets,colors,selwidth=4,states=[],text = []):
         self.pos = pos
         self.dim = dim
         self.displays = []
@@ -370,10 +370,14 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
             # All mouse events
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                
+
+                # Quit the game by a keypress
+                if key[SHUTDOWNKEY]:
+                    running = False
+
                 # Camera on zoomed mode (Ready to update static display by selecting screens with mouse)
                 # (Can return to normal mode by pressing live camera)
-                if camara.dim[0] == CAMARAZOOMEDDIM[0] and camara.dim[1] == CAMARAZOOMEDDIM[1]:
+                elif camara.dim[0] == CAMARAZOOMEDDIM[0] and camara.dim[1] == CAMARAZOOMEDDIM[1]:
                     if camara.pressed(pos):
                         camaraPanel.updatestates()
                         camara.adapt(CAMARAINITIALDIM,CAMARAINITIALPOS)
@@ -401,11 +405,9 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
                             if camaraPanel.states[i] == 1:
                                 camaraPanel.update(image,SCREENSIZE,i)
 
-                                # ADDED M:
+                                # Use finger detection or recognizer detection
                                 if usefinger:
                                     camaraPanel.updatetext(getFingerstrfromImage(image,hands),i)
-
-                                #########
                                 else:
                                     camaraPanel.updatetext(getgesture(image,recognizer),i)
 
