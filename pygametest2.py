@@ -53,7 +53,7 @@ CAMARACHANGEKEY = pygame.K_z # Change between normal and zoomed live camera mode
 DISPLAYSELECTKEYS = [pygame.K_1,pygame.K_2,pygame.K_3,pygame.K_4,pygame.K_5,pygame.K_6,pygame.K_7,pygame.K_8] # Select a screen on zoomed mode
 SHUTDOWNKEY = pygame.K_q # Quit the game
 
-DIRTEXT = ["Up", "Right", "Down", "Left"] # Orders to send when the corresponding screen match
+ACTIONTEXT = ["Confirm", "Dish1", "Dish2", "Dish3", "Dish4", "Complain", "Bill","Wifi"] # Orders to send when the corresponding screen match
 
 # Labels used by the classifier
 MPGESID = ["None", "Pointing_Up", "Thumb_Up", "Closed_Fist", "Thumb_Down", "Open_Palm", "Victory", "ILoveYou"]
@@ -66,6 +66,11 @@ THUMB_POINTS = [1,2,4]
 PALM_POINTS = [0,1,2,5,9,13,17]
 FINGERTIPS_POINTS = [8,12,16,20]
 FINGERBASE_POINTS = [6,10,14,18]
+
+
+# Check if a given position (pos) is in bounds of certain rectangle are (expressed as posbound and dimbound)
+def isInBound(posbound,dimbound,pos):
+    return pos[1] >= posbound[1] and pos[1] <= posbound[1]+dimbound[1] and pos[0] >= posbound[0] and pos[0] <= posbound[0]+dimbound[0]
 
 
 # Live camera screen class (Also used for the individual screens of the display) located on position (pos) with a certain dimension (dim)
@@ -130,9 +135,7 @@ class ScreenDisplay():
 
     # Return (boolean) if the mouse position (mousepos) is on the image
     def pressed(self,mousepos):
-        if mousepos[1] >= self.pos[1] and mousepos[1] <= self.pos[1]+self.dim[1] and mousepos[0] >= self.pos[0] and mousepos[0] <= self.pos[0]+self.dim[0]:
-                return True
-        return False
+        return isInBound(self.pos,self.dim,mousepos)
 
 
 
@@ -215,8 +218,8 @@ class ScreenDisplayPanel():
             for i in range(size[0]*size[1]):
                 self.text.append([])
                 self.text[i].append(GESTEXT[0])
-                if i < len(DIRTEXT):
-                    self.text[i].append(DIRTEXT[i])
+                if i < len(ACTIONTEXT):
+                    self.text[i].append(ACTIONTEXT[i])
                 else:
                     self.text[i].append("")
         else:
@@ -236,7 +239,13 @@ class ScreenDisplayPanel():
                 self.displays[i].draw(screen)
 
                 font = pygame.font.Font(None, 25)
-                disptext = font.render(f'{self.text[i][0]}, {self.text[i][1]}', True, FONTCOLOR)
+
+                disptextcontent = ''
+                for text in self.text[i]:
+                    disptextcontent += text + ', '
+                disptextcontent = disptextcontent[:-2]
+
+                disptext = font.render(disptextcontent, True, FONTCOLOR)
                 screen.blit(disptext, [self.displays[i].pos[0]+10,self.displays[i].pos[1]+self.displays[i].dim[1]+10])
 
     # Same as update method of class ScreenDisplay, but aimed for an specific screen (screenNum, expected as integer)
@@ -248,15 +257,16 @@ class ScreenDisplayPanel():
 
     # Same as pressed method of class ScreenDisplay, but also changes the state of the pressed screen to statevalue 
     # (Erases all the others values. If no screen is pressed, all values would be erased)
-    # TODO: Add an initial check to assure mousepos is even on the display. 
     # TODO: May consider not a lineal search of a selected screen. Use any sort algorithm
     def updatepressed(self,mousepos,statevalue=1):
         changed = False
-        for i in range(len(self.displays)):
-            self.states[i] = 0
-            if (not changed) and self.displays[i].pressed(mousepos):
-                changed = True
-                self.states[i] = statevalue
+
+        if isInBound(self.pos,self.tdim,mousepos):
+            for i in range(len(self.displays)):
+                self.states[i] = 0
+                if (not changed) and self.displays[i].pressed(mousepos):
+                    changed = True
+                    self.states[i] = statevalue
 
         return changed
 
@@ -388,8 +398,7 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
 
     # Create live camera and static display panel
     camara = ScreenDisplay(CAMARAINITIALPOS,CAMARAINITIALDIM)
-    camaraPanel = ScreenDisplayPanel(DISPLAYINITIALPOS,DISPLAYINITIALDIM,DISPLAYOFFSET,DISPLAYDISTRIB,
-                                     DISPLAYSELCOLOR,text=(["Fail",DIRTEXT[0]],["Fail",DIRTEXT[1]],["Fail",DIRTEXT[2]],["Fail",DIRTEXT[3]]))
+    camaraPanel = ScreenDisplayPanel(DISPLAYINITIALPOS,DISPLAYINITIALDIM,DISPLAYOFFSET,DISPLAYDISTRIB,DISPLAYSELCOLOR)
 
     # Update display with stored images
     for i in range(DISPLAYDISTRIB[0]*DISPLAYDISTRIB[1]):
