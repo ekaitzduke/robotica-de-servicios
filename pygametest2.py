@@ -70,6 +70,8 @@ FINGERBASE_POINTS = [6,10,14,18]
 
 # Live camera screen class (Also used for the individual screens of the display) located on position (pos) with a certain dimension (dim)
 # (Dimensions are assumed to be always a list of 2 positive integers, there is no further checks) (Positions are also assumed as 2 integers, with a check on sign)
+
+# Surface pygame object used for display is stored on handle (Uses default solid color FILLERCOLOR when there is no/can't load image)
 class ScreenDisplay():
     def __init__(self,pos,dim):
         self.pos = pos
@@ -77,13 +79,14 @@ class ScreenDisplay():
         self.handle.fill(FILLERCOLOR)
 
     # Draw the image (or the filler rectangle) on the pygame screen (screen) only if it fits completely
+    # (No checks are done on the screen argument format)
     def draw(self,screen):
         if (min(self.pos) >= 0) and (self.pos[0] + self.dim[0] <= screen.get_size()[0]) and (self.pos[1] + self.dim[1] <= screen.get_size()[1]):
             screen.blit(self.handle, self.pos)
 
     # Update the image data (with image) used on the draw function (image assumed to be given on BGR numpy array format)
     # All the image must be confined on the expected screen size (screenDim) to work. A filler rectangle would be used if image is not given
-    # (No checks are done on screenDim argument)
+    # (No checks are done on screenDim or image argument format)
     def update(self,image,screenDim):
         if (min(self.pos) >= 0) and (self.pos[0] + self.dim[0] <= screenDim[0]) and (self.pos[1] + self.dim[1] <= screenDim[1]):
             if image is not None:
@@ -100,7 +103,25 @@ class ScreenDisplay():
             else:
                 self.handle.fill(FILLERCOLOR)
 
-    # Adapt screen to a resize (dim) and a reposition (pos) [reposition conditional to x and y values positives]
+    # Retrieve as a numpy narray (with opencv image format) the image on the screen
+    # Also applies a resize using size values (No check for those)
+    def retrieve(self,size=DISPLAYINITIALDIM):
+        ivalue = []
+
+        for i in range(self.dim[1]):
+            ivalue.append([])
+            for j in range(self.dim[0]):
+                ivalue[i].append(self.handle.get_at((j,i)))
+
+        image = np.array(ivalue)
+        image = cv2.cvtColor(image,cv2.COLOR_RGB2BGR)
+        image = cv2.flip(image,1)
+        image = cv2.resize(image,size)
+
+        return image
+
+    # Adapt screen to a resize (dim) and a reposition (pos) (reposition conditional to x and y values being positive)
+    # Also recreates the surface of the new dimension
     def adapt(self,dim,pos=(-1,-1)):
         if min(pos) >= 0:
             self.pos = pos
@@ -113,30 +134,70 @@ class ScreenDisplay():
                 return True
         return False
 
-# Display screens rectangular formation class. 
-# Formation starts on a position (pos) with each screen having a certain dimension (dim) and with offset between them (offset)
-# Also a formation distribution is needed (size, rows and cols reversed, only used on construction) 
+
+
+# Display screens rectangular formation class
+
+# Formation starts on a position (pos) with each screen having a certain dimension (dim) and with an offset between them (offset)
+# Also a formation distribution is needed (size, rows and cols reversed. Only used on construction, screen list is flattened)
+# The space occupied by this display is stored as total dimensions (tdim)
+
+# data1 and data2 initialiation parameters can either be any pair of dim, offset and tdim
+# datatype value is used to select which pair is used (<= 0 -> dim - offset / == 1 -> dim - tdim / else -> tdim - offset)
+# The leftover parameter is calculated and stored on initialization for each case 
+# (beware rounding leftover with int method on not <= 0 cases)
 
 # An outlier rectangle with a specific color (set by colors) with a certain width (selwidth) would be draw using states values (states)
-# A font text down the image will also be drawn with the text info
+# Current value of the object screen sets the color (state  <= 0 will cause no outlier to be displayed)
+# If a color list element is missing for given a state value, no outlier will be displayed
+# (state list is always set as a vector of length equal to the number of screens on initialization, all 0 by default)
 
-# (dim,offsets,pos and size are assumed to be always a list of 2 positive integers, there is no further checks)
+# A font text down the image will also be drawn with the text info (text) TODO: Needs more refining
+
+# (pos, data1, data2 and size are assumed to be always a list of 2 positive integers, there is no further checks)
 # (selwidth expected as 1 integer > 0, no checks) (colors are expected to be RGB formatted) 
 # (text expected to be given on a list of 2 String lists)
 class ScreenDisplayPanel():
-    def __init__(self,pos,dim,size,offsets,colors,selwidth=4,states=[],text = []):
+    def __init__(self,pos,data1,data2,size,colors,selwidth=4,states=[],text = [], datatype = 0):
         self.pos = pos
-        self.dim = dim
-        self.displays = []
-        self.selwidth = selwidth
-        self.selrect = pygame.Surface((self.dim[0]+self.selwidth*2,self.dim[1]+self.selwidth*2))
         self.colors = colors
+        self.selwidth = selwidth
+
+        # Calculate dimensions for the individual screens (dim), offsets between them (offsets) and 
+        # total dimensions of the display (tdim)
+        self.dim = data1
+        if datatype <= 0:
+            self.tdim = [0,0]
+            offsets = data2
+            for k in range(2):
+                if size[k] > 1:
+                    self.tdim[k] = size[k]*(offsets[k]+self.dim[k])-offsets[k]
+        elif datatype == 1:
+            self.tdim = data2
+            offsets = [0,0]
+            for k in range(2):
+                if size[k] > 1:
+                    offsets[k] = int((self.tdim[k]-self.dim[k]*size[k])/(size[k]-1))
+        else:
+            self.tdim = data1
+            offsets = data2
+            self.dim = [0,0]
+            for k in range(2):
+                if size[k] > 1:
+                    self.dim[k] = int((self.tdim[k]-offsets[k]*(size[k]-1))/(size[k]))
+
+        # Here each screen object will be saved as a list 
+        # (Order from left to right, then top to bottom once the current row is exhausted)
+        self.displays = []
+
+        # Fixed screen surface used for each screen instance as base
+        self.selrect = pygame.Surface((self.dim[0]+self.selwidth*2,self.dim[1]+self.selwidth*2))
 
         # Initialize each screen object
         for i in range(size[1]):
             for j in range(size[0]):
-                screenpos = [pos[0] + (dim[0]+ offsets[0])*j, pos[1] + (dim[1]+ offsets[1])*i]
-                self.displays.append(ScreenDisplay(screenpos,dim))
+                screenpos = [pos[0] + (self.dim[0]+ offsets[0])*j, pos[1] + (self.dim[1]+ offsets[1])*i]
+                self.displays.append(ScreenDisplay(screenpos,self.dim))
 
         # Set states values (would be set to 0 if no data is given for the expected screen)
         if not states:
@@ -187,6 +248,8 @@ class ScreenDisplayPanel():
 
     # Same as pressed method of class ScreenDisplay, but also changes the state of the pressed screen to statevalue 
     # (Erases all the others values. If no screen is pressed, all values would be erased)
+    # TODO: Add an initial check to assure mousepos is even on the display. 
+    # TODO: May consider not a lineal search of a selected screen. Use any sort algorithm
     def updatepressed(self,mousepos,statevalue=1):
         changed = False
         for i in range(len(self.displays)):
@@ -325,7 +388,7 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
 
     # Create live camera and static display panel
     camara = ScreenDisplay(CAMARAINITIALPOS,CAMARAINITIALDIM)
-    camaraPanel = ScreenDisplayPanel(DISPLAYINITIALPOS,DISPLAYINITIALDIM,DISPLAYDISTRIB,DISPLAYOFFSET,
+    camaraPanel = ScreenDisplayPanel(DISPLAYINITIALPOS,DISPLAYINITIALDIM,DISPLAYOFFSET,DISPLAYDISTRIB,
                                      DISPLAYSELCOLOR,text=(["Fail",DIRTEXT[0]],["Fail",DIRTEXT[1]],["Fail",DIRTEXT[2]],["Fail",DIRTEXT[3]]))
 
     # Update display with stored images
@@ -371,13 +434,9 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
 
-                # Quit the game by a keypress
-                if key[SHUTDOWNKEY]:
-                    running = False
-
                 # Camera on zoomed mode (Ready to update static display by selecting screens with mouse)
                 # (Can return to normal mode by pressing live camera)
-                elif camara.dim[0] == CAMARAZOOMEDDIM[0] and camara.dim[1] == CAMARAZOOMEDDIM[1]:
+                if camara.dim[0] == CAMARAZOOMEDDIM[0] and camara.dim[1] == CAMARAZOOMEDDIM[1]:
                     if camara.pressed(pos):
                         camaraPanel.updatestates()
                         camara.adapt(CAMARAINITIALDIM,CAMARAINITIALPOS)
@@ -393,7 +452,11 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
             elif event.type == pygame.KEYDOWN:
                 key = pygame.key.get_pressed()
 
-                if camara.dim[0] == CAMARAZOOMEDDIM[0] and camara.dim[1] == CAMARAZOOMEDDIM[1]:
+                # Quit the game by a keypress
+                if key[SHUTDOWNKEY]:
+                    running = False
+
+                elif camara.dim[0] == CAMARAZOOMEDDIM[0] and camara.dim[1] == CAMARAZOOMEDDIM[1]:
 
                     for i in range(len(DISPLAYSELECTKEYS)):
                         if key[DISPLAYSELECTKEYS[i]]:
