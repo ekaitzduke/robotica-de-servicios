@@ -1,7 +1,4 @@
-
-# Packages to run pygames
-import pygame
-# from pygame.locals import *
+import pygame # Packages to run pygames
 
 import os  # Used just to check path existance when reading images for the initial static display
 import argparse # Argument program treatment
@@ -20,8 +17,8 @@ import numpy as np             # To use arrays and linalg.form on finger calcula
 
 SCREENSIZE = (1000,600)  # Screen size of the game
 
-GAMEFPS = 40 # Game speed on frame per second
-TIMER = 2 # Delay (in s) before trying to do a match in normal mode (it will still run on zoomed mode)
+GAMEFPS = 40        # Game speed on frame per second
+TIMER = 2           # Delay (in s) before trying to do a match in normal mode (it will still run on zoomed mode)
 DELAYFRACTION = 0.5 # Fraction of the timer expected to pass to go from state 2 to 3 in a display
 
 
@@ -36,10 +33,12 @@ CAMARAZOOMEDDIM = (600,300)
 DISPLAYINITIALPOS = (750,20)
 DISPLAYINITIALDIM = (100,50)
 
-DISPLAYDISTRIB = (2,4) # Distribution of the displays (Rows and columns are inverted for pygame)
-DISPLAYOFFSET = (20,50) # Space between screens of the display
+DISPLAYTEXTHEIGHTOFF = 4    # Offset of the text below screen of display by default
+
+DISPLAYDISTRIB = (2,4)      # Distribution of the displays (Rows and columns are inverted for pygame)
+DISPLAYOFFSET = (20,50)     # Space between screens of the display
 FILLERCOLOR = (255,255,255) # Color used to fill screen when no image is given
-FONTCOLOR = (255, 255, 0) # Color of the font used below the screens
+FONTCOLOR = (255, 255, 0)   # Color of the font used below the screens
 
 # Rectangle outlier colors for the state of the screens (1 -> Selected to change, 2 -> Matched, 3 -> Half the timer has passed since match)
 DISPLAYSELCOLOR = [(0,109,180),(0,191,0),[255,221,17]]
@@ -49,11 +48,12 @@ COLORINFOTEXT = (255, 255, 0)
 
 # Letters used to catch events (can be triggered with the mouse as well)
 DISPLAYUPDATEKEY = pygame.K_s # Change gesture with the live camera one of the selected screen of the display o zoomed mode
-CAMARACHANGEKEY = pygame.K_z # Change between normal and zoomed live camera mode
+CAMARACHANGEKEY = pygame.K_z  # Change between normal and zoomed live camera mode
 DISPLAYSELECTKEYS = [pygame.K_1,pygame.K_2,pygame.K_3,pygame.K_4,pygame.K_5,pygame.K_6,pygame.K_7,pygame.K_8] # Select a screen on zoomed mode
-SHUTDOWNKEY = pygame.K_q # Quit the game
+SHUTDOWNKEY = pygame.K_q      # Quit the game
 
-ACTIONTEXT = ["Confirm", "Dish1", "Dish2", "Dish3", "Dish4", "Complain", "Bill","Wifi"] # Orders to send when the corresponding screen match
+ # Orders to send when the corresponding screen match
+ACTIONTEXT = ["Undefined", "Confirm", "Dish1", "Dish2", "Dish3", "Dish4", "Complain", "Bill", "Wifi"]
 
 # Labels used by the classifier
 MPGESID = ["None", "Pointing_Up", "Thumb_Up", "Closed_Fist", "Thumb_Down", "Open_Palm", "Victory", "ILoveYou"]
@@ -61,7 +61,7 @@ MPGESID = ["None", "Pointing_Up", "Thumb_Up", "Closed_Fist", "Thumb_Down", "Open
 # Shortened labels so the font below the screen stays the same and reduced length
 GESTEXT = ["Fail", "None", "Pont", "ThUp", "Fist", "ThDw", "Palm", "Vict", "Love"]
 
-# Finger Index References
+# Finger Index References (used in getfinger function)
 THUMB_POINTS = [1,2,4]
 PALM_POINTS = [0,1,2,5,9,13,17]
 FINGERTIPS_POINTS = [8,12,16,20]
@@ -74,7 +74,8 @@ def isInBound(posbound,dimbound,pos):
 
 
 # Live camera screen class (Also used for the individual screens of the display) located on position (pos) with a certain dimension (dim)
-# (Dimensions are assumed to be always a list of 2 positive integers, there is no further checks) (Positions are also assumed as 2 integers, with a check on sign)
+# (Dimensions are assumed to be always a list of 2 positive integers, there is no further checks) 
+# (Positions are also assumed as 2 integers, with a check on sign)
 
 # Surface pygame object used for display is stored on handle (Uses default solid color FILLERCOLOR when there is no/can't load image)
 class ScreenDisplay():
@@ -155,16 +156,20 @@ class ScreenDisplay():
 # If a color list element is missing for given a state value, no outlier will be displayed
 # (state list is always set as a vector of length equal to the number of screens on initialization, all 0 by default)
 
-# A font text down the image will also be drawn with the text info (text) TODO: Needs more refining
+# A font text down the image will also be drawn with the text info (text)
+# Text parameter is composed of a list (element for screen) of lists (adds a coma and space between them) of strings
+# (Example: text = [['screen1','first'],['screen2','second']])
+# Text is centered in width and just below each screen with an offset (textHeightOffset -> self.texthoff)
 
 # (pos, data1, data2 and size are assumed to be always a list of 2 positive integers, there is no further checks)
 # (selwidth expected as 1 integer > 0, no checks) (colors are expected to be RGB formatted) 
 # (text expected to be given on a list of 2 String lists)
 class ScreenDisplayPanel():
-    def __init__(self,pos,data1,data2,size,colors,selwidth=4,states=[],text = [], datatype = 0):
+    def __init__(self,pos,data1,data2,size,colors,selwidth=4,states=[],text=[],datatype=0,textHeightOffset=DISPLAYTEXTHEIGHTOFF):
         self.pos = pos
         self.colors = colors
         self.selwidth = selwidth
+        self.texthoff = max(int(textHeightOffset),0)
 
         # Calculate dimensions for the individual screens (dim), offsets between them (offsets) and 
         # total dimensions of the display (tdim)
@@ -212,27 +217,29 @@ class ScreenDisplayPanel():
             for i in range(size[0]*size[1]-len(states)):
                 self.states.append(0)
         
-        # Set the text contents
+        # Set the text contents (Uses GESTEXT[0] and ACTIONTEXT constants)
         if not text:
             self.text = []
             for i in range(size[0]*size[1]):
                 self.text.append([])
                 self.text[i].append(GESTEXT[0])
-                if i < len(ACTIONTEXT):
-                    self.text[i].append(ACTIONTEXT[i])
+                if i < len(ACTIONTEXT)-1:
+                    self.text[i].append(ACTIONTEXT[i+1])
                 else:
-                    self.text[i].append("")
+                    self.text[i].append(ACTIONTEXT[0])
         else:
             self.text = list(text[0:size[0]*size[1]])
             for i in range(size[0]*size[1]-len(text)):
                 self.text.append([])
                 self.text[i+len(text)].append(GESTEXT[0])
-                self.text[i+len(text)].append("")
+                self.text[i+len(text)].append(ACTIONTEXT[0])
 
     # Draw all screens on a pygame screen (screen) with a text below and an outlier rectangle if it is requested by states value (0 -> No)
+    # Text is centered on each screen by width and just below with an offset (self.texthoff)
     def draw(self,screen):
         if (min(self.pos) >= 0) and (self.pos[0] + self.dim[0] <= screen.get_size()[0]) and (self.pos[1] + self.dim[1] <= screen.get_size()[1]):
             for i in range(len(self.displays)):
+
                 if self.states[i] > 0 and len(self.colors) >= self.states[i]:
                     self.selrect.fill(self.colors[self.states[i]-1])
                     screen.blit(self.selrect,(self.displays[i].pos[0]-self.selwidth,self.displays[i].pos[1]-self.selwidth))
@@ -246,7 +253,9 @@ class ScreenDisplayPanel():
                 disptextcontent = disptextcontent[:-2]
 
                 disptext = font.render(disptextcontent, True, FONTCOLOR)
-                screen.blit(disptext, [self.displays[i].pos[0]+10,self.displays[i].pos[1]+self.displays[i].dim[1]+10])
+                wtextpos = int(self.displays[i].pos[0]+self.displays[i].dim[0]/2-disptext.get_width()/2)
+                htextpos = self.displays[i].pos[1]+self.displays[i].dim[1]+self.texthoff
+                screen.blit(disptext, [wtextpos,htextpos])
 
     # Same as update method of class ScreenDisplay, but aimed for an specific screen (screenNum, expected as integer)
     def update(self,image,screenDim,screenNum=0):
@@ -270,11 +279,20 @@ class ScreenDisplayPanel():
 
         return changed
 
-    # Update method adapted to only the text content (First element of the two only)
-    def updatetext(self,text,screenNum=0):
+    # Update method adapted to only the text content, changing the text of a single screen (screenNum)
+    # What part of text itself is changed is determined by another parameter (indtext, can overflow to only affect last screen)
+    # Value will be changed to (text), expected as a string or list of strings (if indtext is negative, complete replacement)
+    # Can also change text height offset of every screen (textHeightOffset)
+    # (No checks are done on screenDim or indtext argument format. Also no check for text contents or format)
+    def updatetext(self,text,screenNum=0,indtext=0,textHeightOffset=DISPLAYTEXTHEIGHTOFF):
         screenNum = max(0, screenNum)
         screenNum = min(len(self.displays)-1, screenNum)
-        self.text[screenNum][0] = text
+        indtext = min(len(self.text[screenNum])-1,indtext)
+        self.texthoff = max(int(textHeightOffset),0)
+        if indtext >= 0:
+            self.text[screenNum][indtext] = text
+        else:
+            self.text[screenNum] = text
     
     # Erase all the state values (set to 0) and set the screen value selected (by screenNum) to statevalue
     # (If screenNum is negative, all values would be erased)
@@ -301,8 +319,8 @@ def getgesture(image,recognizer):
     return GESTEXT[0]
 
 
-# Get finger string (decimal value as string of the binary array. A lifted finger is set as 1 and the order starts from thumb to pinky)
-# Uses landmarks from a mediapipe hand detection (mp) and screen dimensions (screendim) to get coordinates for palm, thumb, tips and base fingers
+# Get finger state (a binary array of length 5. A lifted finger is set as 1 and the order starts from thumb to pinky)
+# Uses landmarks from a mediapipe hand detection (lm) and screen dimensions (screendim) to get coordinates for palm, thumb, tips and base fingers
 def getfinger(screendim,lm):
 
     # Get coordinates
@@ -314,7 +332,7 @@ def getfinger(screendim,lm):
     # THUMB
     p1, p2, p3, l1, l2, l3 = gc.getTriangle(coordinates_thumb)
     cos_angle = (l1**2 + l3**2 - l2**2) / (2 * l1 * l3)
-    cos_angle = max(-1, min(1, cos_angle))  # clamp para evitar errores
+    cos_angle = max(-1, min(1, cos_angle))  # Clamp to avoid errors
     thumb_angle = degrees(acos(cos_angle))
     thumb_extened = thumb_angle > 160
                     
@@ -333,6 +351,10 @@ def getfinger(screendim,lm):
     return fingers
 
 
+# Get an id as string to identify state of fingers (conversion of binary array to decimal from getfinger function)
+# Prepares the image (image) to a landmark hand detection model of mediapipe (hands), then sends landmarks detected to getfinger function
+# Only outputs first hand finger state, others are computed but not used (in case of detection error, uses GESTEXT[0])
+# (screen dimensions are set by global parameter SCREENSIZE)
 def getFingerstrfromImage(image,hands):
 
     if image is not None:
@@ -465,13 +487,16 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
                 if key[SHUTDOWNKEY]:
                     running = False
 
+                # Events only available on zoomed camera mode
                 elif camara.dim[0] == CAMARAZOOMEDDIM[0] and camara.dim[1] == CAMARAZOOMEDDIM[1]:
 
+                    # Selects a screen of the display to be updated
                     for i in range(len(DISPLAYSELECTKEYS)):
                         if key[DISPLAYSELECTKEYS[i]]:
                             camaraPanel.updatestates(i)
                             break
-                
+
+                    # Update a screen in the display with current frame of the camera # TODO: Ask for confirmation from user
                     if key[DISPLAYUPDATEKEY]:
                         for i in range(len(camaraPanel.states)):
                             if camaraPanel.states[i] == 1:
@@ -483,11 +508,12 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
                                 else:
                                     camaraPanel.updatetext(getgesture(image,recognizer),i)
 
-                    
+                    # Pass camera to normal mode
                     elif key[CAMARACHANGEKEY]:
                         camaraPanel.updatestates()
                         camara.adapt(CAMARAINITIALDIM,CAMARAINITIALPOS)
 
+                # Pass camera to zoomed mode
                 elif key[CAMARACHANGEKEY]:
                     camaraPanel.updatestates()
                     camara.adapt(CAMARAZOOMEDDIM,CAMARAZOOMEDPOS)
