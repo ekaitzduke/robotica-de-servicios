@@ -1,34 +1,41 @@
-# Robótica de servicios
-
-## Comandos para conectar al repositorio
-- Conectarse al repositorio:
-    ```cmd
-    git remote add origin https://github.com/ekaitzduke/robotica-de-servicios
-    ```
-
-- Descargarse el proyecto (solo la primera vez):
-    ```cmd
-    git clone https://github.com/ekaitzduke/robotica-de-servicios
-    ```
-
+# Robótica de servicios (Gestos y GUI)
 
 ## ToDo:
-- MÁQUINA DE ESTADOS
-    ```powershell
-    Estados:
-        1) WANDER: El robot deambula  hasta detectar un gesto.
-        2) APROACH: El robot se aproxima al cliente que ha levantado la mano (5 dedos extendidos).
-        3) RECOGNISE: Reconocer el gesto (saber que gesto se va a hacer)
-        4) EXECUTE: Ejecutar la acción
-    ```
 
-- RECONOCIMIENTO DE GESTOS
-    ```powershell
-    Clasificación de gestos:
-        1) 5 dedos extendidos: Llamar al robot.
-        2) Pulgar arriba: Pedido completado.
-        3) En base al nº de dedos extendido: seleccionar pedido
-        4) Pulgar abajo: Hoja de reclamaciones.
-        5) Apuntar con un dedo a la palma contraria: Pedir cuenta.
-        6) Wassaaa: Pedir Wifi.
-    ```
+- SOLUCIONAR GESTOS
+
+    1) Hacer detección de pulgar más robusta
+
+    2) Usar parámetros del detector (bajarle confianza) para que funcione en entornos con iluminación no uniforme
+
+
+
+- CONEXIÓN CON ROBOT
+
+    1) Averiguar si es conveniente que el robot mantenga propiamente la GUI como un nodo o que un ordenador externo envíe los datos directamente según acciones en esta al robot
+
+    2) En caso de que el robot vaya a contener la GUI:
+ 
+        1) Averiguar si robot tiene pygame, opencv y mediapipe incorporado.
+      
+        2) En caso negativo, ver si tiene anaconda/miniconda incorporado.
+      
+        3) Si todo esto falla, seguramente toque llorar en una esquina y olvidarse de que pueda mover la GUI por si solo (o volver a preguntar a profesor)
+ 
+    3) En caso de que se vaya a comunicar los datos al robot (que solo tendrá máquina de estados y algo para enviar datos de la GUI captados externamente a un topic concreto)
+ 
+        1) Averiguar como se pueden comunicar datos entre robot y ordenador (no abrir propiamente un escritorio remoto, sino un mensaje por la conexión o algo parecido)
+      
+        2) Construir nodo que se encargue de recoger estos datos y enviárselos a los topics de ROS2
+
+
+
+- MEJORAS GUI
+
+    1) Incorporar guardado de imágenes en la aplicación (Tiene que guardarse con cierta resolución, seguramente requiera duplicar imagen de lo que usa para mostrar en pantalla)
+
+    2) Añadir un sistema de páginas en la cuadricula de pantallas (Que se vaya rellenando y añadiendo páginas en caso de querer incorporar más imágenes. Usar teclas +/- para pasar páginas?)
+ 
+    3) Añadir pregunta directa en pantalla cuando haya una detección de gesto para confirmar (acknowledge)
+ 
+    4) Añadir un botón para permitir cambiar distribución de imágenes en una cuadrícula (un swap entre 2 imágenes)
