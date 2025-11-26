@@ -1,2 +1,2 @@
 [console_scripts]
-run_camarero = robot_camarero.turte:main
+turte = robot_camarero.turte:main

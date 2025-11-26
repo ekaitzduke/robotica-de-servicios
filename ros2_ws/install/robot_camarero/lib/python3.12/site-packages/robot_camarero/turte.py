@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 from enum import Enum
 from std_msgs.msg import Int8 # Usaremos Int8 para mandar números desde el teclado
+from geometry_msgs.msg import Twist
 
 # Definimos los estados posibles
 class RobotState(Enum):
@@ -22,21 +23,23 @@ class Gesture(Enum):
 
 class WaiterRobot(Node):
     def __init__(self):
-        # CORRECCIÓN: Doble guion bajo
         super().__init__('waiter_robot')
+
         self.state = RobotState.WANDER
         self.current_gesture = Gesture.NONE
+        self.steps_counter = 0
         
         # 1. CREAR SUSCRIPTOR: Escucha en el topic /comando_gesto
-        self.subscription = self.create_subscription(
-            Int8,                           # Tipo de mensaje: Entero de 8 bits
-            '/comando_gesto',               # Nombre del topic
-            self.gesture_callback,          # Función que se llama al recibir un mensaje
-            10)                             # Calidad de Servicio (QoS)
+        self.subscription = self.create_subscription(Int8, '/comando_gesto', self.gesture_callback, 10)                             
         self.subscription # Previene warning de variable no usada
 
+        # 2. PUBLICADOR DE VELOCIDAD (Motores)
+        # Publicamos en /cmd_vel_unstamped. El nodo de TB4 lo convertirá a /cmd_vel con timestamp.
+        # Esta es la forma correcta de interactuar con la arquitectura del TB4.
+        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel_unstamped', 10)
+
         # 2. TEMPORIZADOR para la máquina de estados
-        self.create_timer(1.0, self.state_machine_step)
+        self.create_timer(0.1, self.state_machine_step)
         self.get_logger().info("Robot camarero iniciado. Estado inicial: WANDER")
         self.get_logger().info("Esperando comandos en el topic /comando_gesto (1-6)")
 
@@ -65,30 +68,43 @@ class WaiterRobot(Node):
             self.execute()
 
     def wander(self):
-        self.get_logger().info("🌐 Vagando por el área.")
-        # Ahora, la detección depende del suscriptor
+        # LÓGICA: Dar vueltas en círculo (Avanzar + Girar)
+        msg = Twist()
+        msg.linear.x = 0.3   # Velocidad hacia adelante
+        msg.angular.z = 0.5  # Velocidad de giro
+        self.cmd_vel_pub.publish(msg)
+
+        # Transición si recibimos un 1
         if self.current_gesture == Gesture.CALL_ROBOT:
-            self.get_logger().info("✋ Comando 'CALL_ROBOT' (1) recibido → APPROACH")
+            self.get_logger().info("✋ 'CALL_ROBOT' recibido -> Acercándose...")
             self.state = RobotState.APPROACH
-            self.current_gesture = Gesture.NONE # Consumir el gesto
+            self.steps_counter = 0 # Reseteamos el contador de pasos
+            self.current_gesture = Gesture.NONE
 
     def approach(self):
-        self.get_logger().info("🚶 Acercándose al cliente. Transicionando a RECOGNIZE...")
-        # Aquí iría la lógica de navegación
-        self.state = RobotState.RECOGNIZE
-        # No se consume el gesto aquí, ya que se asume que el robot llega y espera
-        # El gesto se consume si se recibe en el estado RECOGNIZE.
-
-    def recognize(self):
-        self.get_logger().info("🤖 Esperando gesto del cliente. (2-6)")
+        # LÓGICA: Avanzar recto una distancia corta (durante 40 ciclos = 4 segundos)
+        limit_steps = 40 
         
-        # Espera que el suscriptor haya actualizado self.current_gesture
-        if self.current_gesture != Gesture.NONE:
-            self.get_logger().info(f"✅ Gesto {self.current_gesture.name} reconocido.")
-            self.state = RobotState.EXECUTE
+        if self.steps_counter < limit_steps:
+            msg = Twist()
+            msg.linear.x = 0.5  # Avanzar más rápido
+            msg.angular.z = 0.0 # Sin girar
+            self.cmd_vel_pub.publish(msg)
+            self.steps_counter += 1
         else:
-            # Permanece en RECOGNIZE hasta que se presione una tecla
-            pass
+            # Cuando termina la distancia, frenamos y cambiamos de estado
+            self.stop_robot()
+            self.get_logger().info("🛑 Llegada al cliente. Esperando orden (RECOGNIZE).")
+            self.state = RobotState.RECOGNIZE
+    
+    def recognize(self):
+        # LÓGICA: Estar quieto hasta recibir orden
+        self.stop_robot() # Aseguramos que esté quieto
+
+        # Esperamos cualquier gesto válido (del 2 al 6)
+        if self.current_gesture != Gesture.NONE and self.current_gesture != Gesture.CALL_ROBOT:
+            self.get_logger().info(f"✅ Gesto {self.current_gesture.name} entendido.")
+            self.state = RobotState.EXECUTE
 
     def execute(self):
         """Ejecuta acción según el gesto reconocido"""
@@ -113,6 +129,14 @@ class WaiterRobot(Node):
         self.current_gesture = Gesture.NONE
 
     # Se elimina la función detect_gesture ya que es reemplazada por el suscriptor
+
+    # CORRECCIÓN: Añadida la función que faltaba
+    def stop_robot(self):
+        """Envía velocidad cero para detener el robot"""
+        msg = Twist()
+        msg.linear.x = 0.0
+        msg.angular.z = 0.0
+        self.cmd_vel_pub.publish(msg)
 
 def main(args=None):
     rclpy.init(args=args)

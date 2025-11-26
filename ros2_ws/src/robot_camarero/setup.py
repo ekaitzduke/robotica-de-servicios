@@ -1,4 +1,6 @@
 from setuptools import find_packages, setup
+import os
+from glob import glob
 
 package_name = 'robot_camarero'
 
@@ -10,6 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*.launch.py'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,7 +27,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'run_camarero = robot_camarero.turte:main'
+            'turte = robot_camarero.turte:main'
         ],
     },
 )

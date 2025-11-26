@@ -8,8 +8,10 @@ setup.py
 ../../build/robot_camarero/robot_camarero.egg-info/requires.txt
 ../../build/robot_camarero/robot_camarero.egg-info/top_level.txt
 ../../build/robot_camarero/robot_camarero.egg-info/zip-safe
+launch/run.launch.py
 resource/robot_camarero
 robot_camarero/__init__.py
+robot_camarero/gestos.py
 robot_camarero/turte.py
 test/test_copyright.py
 test/test_flake8.py
