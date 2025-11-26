@@ -12,21 +12,11 @@
 
 - CONEXIÓN CON ROBOT
 
-    1) Averiguar si es conveniente que el robot mantenga propiamente la GUI como un nodo o que un ordenador externo envíe los datos directamente según acciones en esta al robot
-
-    2) En caso de que el robot vaya a contener la GUI:
+    1) Probar GUI como un nodo de ros2
  
-        1) Averiguar si robot tiene pygame, opencv y mediapipe incorporado.
-      
-        2) En caso negativo, ver si tiene anaconda/miniconda incorporado.
-      
-        3) Si todo esto falla, seguramente toque llorar en una esquina y olvidarse de que pueda mover la GUI por si solo (o volver a preguntar a profesor)
+    2) Arrancar robot y observar que comparte los topics con un ordenador externo
  
-    3) En caso de que se vaya a comunicar los datos al robot (que solo tendrá máquina de estados y algo para enviar datos de la GUI captados externamente a un topic concreto)
- 
-        1) Averiguar como se pueden comunicar datos entre robot y ordenador (no abrir propiamente un escritorio remoto, sino un mensaje por la conexión o algo parecido)
-      
-        2) Construir nodo que se encargue de recoger estos datos y enviárselos a los topics de ROS2
+    3) Comprobar que se recibe la información de la cámara y se envían las órdenes de control correctamente 
 
 
 
