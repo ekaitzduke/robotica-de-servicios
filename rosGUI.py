@@ -2,8 +2,7 @@ import pygame # Packages to run pygames
 
 import os  # Used just to check path existance when reading images for the initial static display
 import argparse # Argument program treatment
-import cv2 # Package for image collection and processing
-# import gather_samples as gs # Custom external program to gather the images instead of just loading existing ones
+import cv2 # Package for image collection and processing mediapipe_ros2_interfaces
 
 # Packages needed for gesture recognition
 import mediapipe as mp
@@ -11,7 +10,6 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 from math import acos, degrees # Used for thumb angle calculation 
-import gesture_control as gc   # Some functions to get finger, palm and centroid coordinates given landmarks
 import numpy as np             # To use arrays and linalg.form on finger calculation
 
 import rclpy
@@ -69,6 +67,33 @@ THUMB_POINTS = [1,2,4]
 PALM_POINTS = [0,1,2,5,9,13,17]
 FINGERTIPS_POINTS = [8,12,16,20]
 FINGERBASE_POINTS = [6,10,14,18]
+
+
+# Gets hand_landmarks coordinates ((x,y) for each on a list) given a screen (dimensions width,height) and
+# a mediapipe hand_landmark detection (hand_landmarks) and only the index desired on a list (point_lists)
+def getCoordinates (width, height, points_list, hand_landmarks): 
+    coordinates = [] 
+    for i in points_list: 
+        xthumb=int(hand_landmarks.landmark[i].x*width) 
+        ythumb=int(hand_landmarks.landmark[i].y*height) 
+        coordinates.append([xthumb,ythumb]) 
+    
+    return coordinates 
+
+def getTriangle (coordinates_thumb): 
+    p1 = np.array(coordinates_thumb[0]) 
+    p2 = np.array(coordinates_thumb[1]) 
+    p3 = np.array(coordinates_thumb[2]) 
+    l1 = np.linalg.norm(p2-p3) 
+    l2 = np.linalg.norm(p1-p3) 
+    l3 = np.linalg.norm(p1-p2) 
+    return p1, p2, p3, l1, l2, l3 
+
+def palmCentroid (coordinates_list): 
+    coordinates = np.array(coordinates_list) 
+    centroid = np.mean(coordinates, axis=0) 
+    centroid = int(centroid[0]), int(centroid[1]) 
+    return centroid
 
 
 # Check if a given position (pos) is in bounds of certain rectangle are (expressed as posbound and dimbound)
@@ -327,20 +352,20 @@ def getgesture(image,recognizer):
 def getfinger(screendim,lm):
 
     # Get coordinates
-    coordinates_thumb = gc.getCoordinates(screendim[0], screendim[1], THUMB_POINTS, lm)
-    coordinates_palm = gc.getCoordinates(screendim[0], screendim[1], PALM_POINTS, lm)
-    coordinates_ft = gc.getCoordinates(screendim[0], screendim[1], FINGERTIPS_POINTS, lm)
-    coordinates_fb = gc.getCoordinates(screendim[0], screendim[1], FINGERBASE_POINTS, lm)
+    coordinates_thumb = getCoordinates(screendim[0], screendim[1], THUMB_POINTS, lm)
+    coordinates_palm = getCoordinates(screendim[0], screendim[1], PALM_POINTS, lm)
+    coordinates_ft = getCoordinates(screendim[0], screendim[1], FINGERTIPS_POINTS, lm)
+    coordinates_fb = getCoordinates(screendim[0], screendim[1], FINGERBASE_POINTS, lm)
 
     # THUMB
-    p1, p2, p3, l1, l2, l3 = gc.getTriangle(coordinates_thumb)
+    p1, p2, p3, l1, l2, l3 = getTriangle(coordinates_thumb)
     cos_angle = (l1**2 + l3**2 - l2**2) / (2 * l1 * l3)
     cos_angle = max(-1, min(1, cos_angle))  # Clamp to avoid errors
     thumb_angle = degrees(acos(cos_angle))
     thumb_extened = thumb_angle > 160
                     
     # OTHER FINGERS
-    nx, ny = gc.palmCentroid (coordinates_palm)
+    nx, ny = palmCentroid (coordinates_palm)
     coordinates_centroid = np.array([nx, ny])
     coordinates_fb = np.array(coordinates_fb)
     coordinates_ft = np.array(coordinates_ft)
@@ -386,7 +411,7 @@ def getFingerstrfromImage(image,hands):
 
 class gestureGUI(Node):
 
-    def init(self,displaypath,imgformat,cameraport,usefinger,debug,recognizer):
+    def __init__(self,displaypath,imgformat,cameraport,usefinger,debug,recognizer):
         super().__init__("gestureGUI")
 
         self.usefinger = usefinger
@@ -469,7 +494,7 @@ class gestureGUI(Node):
             else:
                 if self.camara.pressed(pos):
                     self.camaraPanel.updatestates()
-                    self.camaraPanelcamara.adapt(CAMARAZOOMEDDIM,CAMARAZOOMEDPOS)
+                    self.camara.adapt(CAMARAZOOMEDDIM,CAMARAZOOMEDPOS)
 
         # All keybinds events
         elif event.type == pygame.KEYDOWN:
@@ -531,7 +556,7 @@ class gestureGUI(Node):
         pygame.display.flip()
 
 
-    def detect_gesture_action(self,image):
+    def detect_gesture_action(self,image,timer):
 
         # Internal timer to avoid gesture/finger recognition each frame
         if timer > 0:
@@ -582,6 +607,8 @@ class gestureGUI(Node):
 
                 for event in pygame.event.get():
                     running = self.handle_events(event,image,success)
+                    if not running:
+                        break
 
                 self.draw_GUI(image)
 
