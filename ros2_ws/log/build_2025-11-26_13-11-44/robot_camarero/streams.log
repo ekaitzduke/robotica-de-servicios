@@ -1,0 +1,22 @@
+[0.784s] Invoking command in '/home/mario/Documentos/Robotica de servicios/ros2_ws/src/robot_camarero': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/mario/Documentos/Robotica de servicios/ros2_ws/build/robot_camarero/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mario/Documentos/Robotica de servicios/ros2_ws/install/robot_camarero/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/robot_camarero build --build-base /home/mario/Documentos/Robotica de servicios/ros2_ws/build/robot_camarero/build install --record /home/mario/Documentos/Robotica de servicios/ros2_ws/build/robot_camarero/install.log --single-version-externally-managed install_data
+[1.035s] running egg_info
+[1.053s] writing ../../build/robot_camarero/robot_camarero.egg-info/PKG-INFO
+[1.053s] writing dependency_links to ../../build/robot_camarero/robot_camarero.egg-info/dependency_links.txt
+[1.053s] writing entry points to ../../build/robot_camarero/robot_camarero.egg-info/entry_points.txt
+[1.054s] writing requirements to ../../build/robot_camarero/robot_camarero.egg-info/requires.txt
+[1.054s] writing top-level names to ../../build/robot_camarero/robot_camarero.egg-info/top_level.txt
+[1.091s] reading manifest file '../../build/robot_camarero/robot_camarero.egg-info/SOURCES.txt'
+[1.091s] writing manifest file '../../build/robot_camarero/robot_camarero.egg-info/SOURCES.txt'
+[1.092s] running build
+[1.092s] running build_py
+[1.092s] running install
+[1.098s] running install_lib
+[1.117s] running install_data
+[1.117s] copying launch/run.launch.py -> /home/mario/Documentos/Robotica de servicios/ros2_ws/install/robot_camarero/share/robot_camarero/launch
+[1.117s] running install_egg_info
+[1.137s] removing '/home/mario/Documentos/Robotica de servicios/ros2_ws/install/robot_camarero/lib/python3.12/site-packages/robot_camarero-0.0.0-py3.12.egg-info' (and everything under it)
+[1.137s] Copying ../../build/robot_camarero/robot_camarero.egg-info to /home/mario/Documentos/Robotica de servicios/ros2_ws/install/robot_camarero/lib/python3.12/site-packages/robot_camarero-0.0.0-py3.12.egg-info
+[1.138s] running install_scripts
+[1.266s] Installing turte script to /home/mario/Documentos/Robotica de servicios/ros2_ws/install/robot_camarero/lib/robot_camarero
+[1.267s] writing list of installed files to '/home/mario/Documentos/Robotica de servicios/ros2_ws/build/robot_camarero/install.log'
+[1.304s] Invoked command in '/home/mario/Documentos/Robotica de servicios/ros2_ws/src/robot_camarero' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/mario/Documentos/Robotica de servicios/ros2_ws/build/robot_camarero/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mario/Documentos/Robotica de servicios/ros2_ws/install/robot_camarero/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/robot_camarero build --build-base /home/mario/Documentos/Robotica de servicios/ros2_ws/build/robot_camarero/build install --record /home/mario/Documentos/Robotica de servicios/ros2_ws/build/robot_camarero/install.log --single-version-externally-managed install_data

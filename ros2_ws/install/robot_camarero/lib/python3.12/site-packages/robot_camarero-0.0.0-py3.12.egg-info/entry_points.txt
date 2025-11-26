@@ -1,0 +1,3 @@
+[console_scripts]
+turte_real = robot_camarero.turte_real:main
+turte_sim = robot_camarero.turte_sim:main
