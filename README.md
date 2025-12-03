@@ -12,7 +12,7 @@
 
 - CONEXIÓN CON ROBOT
 
-    1) Probar GUI como un nodo de ros2
+    1) Probar GUI como un nodo de ros2 (ordenadores del laboratorio y aula de libre acceso tiene problemas con sus drivers. Por ahora se ha comprobado que solo funciona el de al lado del profesor)
  
     2) Arrancar robot y observar que comparte los topics con un ordenador externo
  
