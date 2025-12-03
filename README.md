@@ -1,5 +1,40 @@
 # Robótica de servicios (Gestos y GUI)
 
+Rama dedicada a la detección de gestos y GUI del turtlebot
+
+## Utilidades
+
+Los códigos se han desarrollado con la intención de que un contenedor docker (lanzado en ubuntu 24.04 LTS nativo) pueda mantener la aplicación. Se aportan comandos interesantes para lanzar y gestionar este entorno:
+
+### Antes de entrar al entorno
+
+Permite al contenedor conectarse al servidor anfritión y poder lanzar GUIs:
+```cmd
+xhost +
+```
+
+Construye la imagen docker (se espera tener el código fuente accesible en la misma carpeta donde se construya):
+```cmd
+docker build -t ros2_kobuki .
+```
+
+Lanzar el contenedor (montará un volumen en la carpeta de Descargas, teniendo completa accesibilidad de los archivos en esta) (Se espera que los drivers de nvidia estén correctamente configurados en su dispositivo):
+```cmd
+docker run --shm-size=1g --privileged --ulimit memlock=-1 --ulimit stack=67108864 --rm -it --net=host -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:rw --name ros2_kobuki_container --cpuset-cpus=0-3 -v /home/alumno/Descargas/:/vgd -v /run/udev:/run/udev --gpus all -e NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all} -e NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-all} ros2_kobuki
+```
+
+Para abrir más terminales:
+```cmd
+docker exec -it ros2_kobuki_container /bin/bash
+```
+
+Al cerrar el contenedor (exit) se perderá cualquier cambio realizado en él que no sea en el volumen montado. Puede borrar la imagen residual usando (AVISO: No se borrarán los datos de la caché del propio docker, al menos no en ordenadores del laboratorio):
+```cmd
+docker image rmi ros2_kobuki:latest && docker image prune
+```
+
+
+
 ## ToDo:
 
 - SOLUCIONAR GESTOS
