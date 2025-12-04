@@ -28,12 +28,16 @@ Para abrir más terminales:
 docker exec -it ros2_kobuki_container /bin/bash
 ```
 
-Al cerrar el contenedor (exit) se perderá cualquier cambio realizado en él que no sea en el volumen montado. Puede borrar la imagen residual usando (AVISO: No se borrarán los datos de la caché del propio docker, al menos no en ordenadores del laboratorio):
+Al cerrar el contenedor (**exit**) se perderá cualquier cambio realizado en él que no sea en el volumen montado. Puede borrar la imagen residual usando (**AVISO**: No se borrarán los datos de la caché del propio docker, al menos no en ordenadores del laboratorio):
 ```cmd
 docker image rmi ros2_kobuki:latest && docker image prune
 ```
 
+## Problemas
 
+Algunos ordenadores del laboratorio tienen problemas con el mediapipe corriendo en el contenedor (en entorno virtual nativo conda van bien), mostrando el siguiente mensaje **al cargar recognizer o hands** mediante opciones: **MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)** [Programa no se puede cerrar, necesita **crtl+z**]. <br/>
+<br/>
+Por el momento no se ha encontrado solución (algunos ordenadores van bien como el de la entrada al laboratorio en mesa del profesor). El modo debug (**-d**) está preparado para deshabilitar estas funcionalidades, lo cual deja al programa con la interfaz gráfica y poco más.
 
 ## ToDo:
 
