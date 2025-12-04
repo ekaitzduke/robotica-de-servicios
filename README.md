@@ -37,7 +37,7 @@ docker exec -it ros2_kobuki_container /bin/bash
 
 Al cerrar el contenedor (**exit**) se perderá cualquier cambio realizado en él que no sea en el volumen montado. Puede borrar la imagen residual usando (**AVISO**: No se borrarán los datos de la caché del propio docker, al menos no en ordenadores del laboratorio):
 ```cmd
-docker image rmi ros2_kobuki:latest && docker image prune
+docker image rmi ros2_kobuki:latest && docker image prune -f
 ```
 **NOTE: Falta temas de conexión y comunicación**
 <br/><br/>
@@ -62,6 +62,7 @@ Puedes probar a lanzar manualmente una acción de control con el siguiente coman
 ```cmd
 ros2 topic pub --once /comando_gesto std_msgs/Int8 '{data: 6}'
 ```
+**NOTE: Falta hacer que la simulación o el launch funcione**
 <br/><br/>
 ## Problemas
 
