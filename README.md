@@ -51,7 +51,7 @@ cd ros2_Serv_ws && source ./mp_env/bin/activate
 Luego lanza el nodo directamente con python (ros2 no funciona ya que no reconoce los paquetes del entorno virtual):<br/>
 (Recuerda que al cerrar el nodo, puedes desactivar el entorno virtual con el comando **deactivate**)
 ```cmd
-python src/serv_proy/serv_proy/rosGUI.py -d
+python src/serv_proy/serv_proy/rosGUI.py
 ```
 <br/><br/>
 En otro terminal puedes lanzar el nodo de control con la máquina de estados de forma aislada:
