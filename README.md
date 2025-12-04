@@ -66,9 +66,9 @@ ros2 topic pub --once /comando_gesto std_msgs/Int8 '{data: 6}'
 <br/><br/>
 ## Problemas
 
-Algunos ordenadores del laboratorio tienen problemas con el mediapipe corriendo en el contenedor (en entorno virtual nativo conda van bien), mostrando el siguiente mensaje **al cargar recognizer o hands** mediante opciones: **MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)** [Programa no se puede cerrar, necesita **crtl+z**]. <br/>
+Algunos ordenadores del laboratorio tienen problemas con el mediapipe corriendo en el contenedor (en entorno virtual nativo python y conda van bien), mostrando el siguiente mensaje **al cargar recognizer o hands** mediante opciones: **MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)** [Programa no se puede cerrar, necesita **crtl+z**]. <br/>
 <br/>
-Por el momento no se ha encontrado solución (algunos ordenadores van bien como el de la entrada al laboratorio en mesa del profesor). El modo debug (**-d**) está preparado para deshabilitar estas funcionalidades, lo cual deja al programa con la interfaz gráfica y poco más.
+Por el momento no se ha encontrado solución (algunos ordenadores funcionan correctamente como el de la entrada al laboratorio en mesa del profesor). El modo debug (**-d**) está preparado para deshabilitar estas funcionalidades, lo cual deja al programa con la interfaz gráfica y poco más (simplemente inicializa a None hands y recognizer en su declaración, fácil de revertir o cambiar).
 
 ## ToDo:
 
