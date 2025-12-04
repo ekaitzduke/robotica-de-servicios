@@ -13,7 +13,12 @@ Permite al contenedor conectarse al servidor anfritión y poder lanzar GUIs:
 xhost +
 ```
 
-Construye la imagen docker (se espera tener el código fuente accesible en la misma carpeta donde se construya):
+Descarga los ficheros necesarios y preparalos (no importa el lugar):
+```cmd
+git clone https://github.com/ekaitzduke/robotica-de-servicios -b app-gesture && mv robotica-de-servicios serv && mv serv/Dockerfile ./Dockerfile
+```
+
+Construye la imagen docker (se espera tener el código fuente accesible en la misma carpeta donde se construya, es decir, lanzar el comando después del anterior):
 ```cmd
 docker build -t ros2_kobuki .
 ```
