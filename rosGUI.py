@@ -335,7 +335,8 @@ class ScreenDisplayPanel():
 # Get gesture string from an image (expected as selfie) with a gesture model (recognizer) of mediapipe
 # (Uses MACRO values MPGESID and GESTEXT to rename the gesture. Search them for more info)
 def getgesture(image,recognizer):
-    if image is not None:
+
+    if image is not None and recognizer is not None:
         image = cv2.flip(image, 1)
         image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
@@ -385,7 +386,7 @@ def getfinger(screendim,lm):
 # (screen dimensions are set by global parameter SCREENSIZE)
 def getFingerstrfromImage(image,hands):
 
-    if image is not None:
+    if image is not None and hands is not None:
         image = cv2.flip(image, 1)
         image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
         results = hands.process(image)
@@ -418,15 +419,21 @@ class gestureGUI(Node):
         self.debug = debug
 
         # Initialize the hand detector of mediapipe
-        self.hands = mp.solutions.hands.Hands(
-            static_image_mode = True, 
-            max_num_hands = 1,
-            min_detection_confidence = 0.8,
-            min_tracking_confidence = 0.8,
-            model_complexity = 1
-        )
+        if debug:
+            self.hands = None
+        else:
+            self.hands = mp.solutions.hands.Hands(
+                static_image_mode = True, 
+                max_num_hands = 1,
+                min_detection_confidence = 0.8,
+                min_tracking_confidence = 0.8,
+                model_complexity = 1
+            )
 
-        self.recognizer = recognizer
+        if debug:
+            self.recognizer = None
+        else:
+            self.recognizer = recognizer
 
         # Capture the video and read the first frame
         if not debug:
@@ -467,7 +474,7 @@ class gestureGUI(Node):
             if usefinger:
                 self.camaraPanel.updatetext(getFingerstrfromImage(image,self.hands),i)
             else:
-                self.camaraPanel.updatetext(getgesture(image,recognizer),i)
+                self.camaraPanel.updatetext(getgesture(image,self.recognizer),i)
 
 
 
@@ -641,9 +648,12 @@ def main():
     args = parser.parse_args()
 
     # Initialize the recognizer for the gestures
-    base_options = python.BaseOptions(model_asset_path='gesture_recognizer.task')
-    options = vision.GestureRecognizerOptions(base_options=base_options)
-    recognizer = vision.GestureRecognizer.create_from_options(options)
+    if args.debug:
+        recognizer = None
+    else:
+        base_options = python.BaseOptions(model_asset_path='gesture_recognizer.task')
+        options = vision.GestureRecognizerOptions(base_options=base_options)
+        recognizer = vision.GestureRecognizer.create_from_options(options)
 
 
     rclpy.init()
