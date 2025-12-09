@@ -414,16 +414,14 @@ def getFingerstrfromImage(image,hands):
 
 class gestureGUI(Node):
 
-    def __init__(self,displaypath,imgformat,cameraport,usefinger,debug,recognizer):
+    def __init__(self,displaypath,imgformat,cameraport,usefinger,debug,nomediapipe,recognizer):
         super().__init__("gestureGUI")
 
         self.usefinger = usefinger
         self.debug = debug
 
-        # Initialize the hand detector of mediapipe
-        if debug:
-            self.hands = None
-        else:
+        if not nomediapipe:
+            # Initialize the hand detector of mediapipe
             self.hands = mp.solutions.hands.Hands(
                 static_image_mode = True, 
                 max_num_hands = 1,
@@ -431,6 +429,8 @@ class gestureGUI(Node):
                 min_tracking_confidence = 0.8,
                 model_complexity = 1
             )
+        else:
+            self.hands = None
 
         if debug:
             self.recognizer = None
@@ -694,21 +694,22 @@ def main():
 
     parser.add_argument('--verbose','-v', action = 'store_true', help = 'Show information on terminal')
     parser.add_argument('--debug','-d', action = 'store_true', help = 'Debug mode (deactivate live feed)')
+    parser.add_argument('--nomediapipe', '-nm', action = 'store_true', help = 'Disable mediapipe utility on app')
 
 
     args = parser.parse_args()
 
     # Initialize the recognizer for the gestures
-    if args.debug:
-        recognizer = None
-    else:
+    if not args.nomediapipe:
         base_options = python.BaseOptions(model_asset_path='gesture_recognizer.task')
         options = vision.GestureRecognizerOptions(base_options=base_options)
         recognizer = vision.GestureRecognizer.create_from_options(options)
+    else:
+        recognizer = None
 
 
     rclpy.init()
-    node = gestureGUI(args.outputpath,args.saveformat,args.cameraport,args.usefinger,args.debug,recognizer)
+    node = gestureGUI(args.outputpath,args.saveformat,args.cameraport,args.usefinger,args.debug,args.nomediapipe,recognizer)
     try:
         node.run(args.pubgesttopic)
     except KeyboardInterrupt:
