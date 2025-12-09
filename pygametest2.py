@@ -558,7 +558,7 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
             timer = TIMER*GAMEFPS
 
         # Blink the selected gesture (After a fraction of the timer has passed)
-        if timer < TIMER*GAMEFPS*DELAYFRACTION:
+        if timer < TIMER*GAMEFPS*DELAYFRACTION and timer > TIMER*GAMEFPS*DELAYFRACTION-2:
             for k in range(len(camaraPanel.displays)):
                 if camaraPanel.states[k] == 2:
                     camaraPanel.states[k] += 1
