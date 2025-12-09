@@ -70,6 +70,24 @@ cp /vgd/serv/file /ros2_Serv_ws/src/serv_proy/serv_proy/file
 
 **NOTE: Falta hacer que la simulación o el launch funcione**
 <br/><br/>
+
+### YASMIN
+
+Instalación de código fuente
+```cmd
+python3 -m venv mp_env --system-site-packages --symlinks && . mp_env/bin/activate && pip install pygame mediapipe expiringdict flask waitress && . mp_env/bin/activate
+```
+
+```cmd
+mkdir -p ros2_yasmin_ws/src && cd ros2_yasmin_ws/src && git clone --branch 3.5.1 https://github.com/uleroboticsgroup/yasmin.git && colcon build && source ../install/setup.bash
+```
+
+Activar yasmin viewer
+```cmd
+ros2 run yasmin_viewer yasmin_viewer_node
+```
+
+
 ## Problemas
 
 Algunos ordenadores del laboratorio tienen problemas con el mediapipe corriendo en el contenedor (en entorno virtual nativo python y conda van bien), mostrando el siguiente mensaje **al cargar recognizer o hands** mediante opciones: **MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)** [Programa no se puede cerrar, necesita **crtl+z**]. <br/>
