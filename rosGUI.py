@@ -439,7 +439,7 @@ class gestureGUI(Node):
 
         # Capture the video and read the first frame
         if not debug:
-            self.video = cv2.VideoCaptur
+            self.video = cv2.VideoCapture(cameraport)
         
         self._pub_gesture = None        # Future pointer to publisher handler of gestures
 
