@@ -381,7 +381,7 @@ def getFingerstrfromImage(image,hands):
 
 
 
-def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,debug,recognizer):
+def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,debug,nomediapipe,recognizer):
 
     # Timer (using frames as unit) to wait to start a recognition attempt (Does one, then resets)
     timer = TIMER*GAMEFPS
@@ -393,7 +393,7 @@ def testgame(displaypath,imgformat,cameraport,gathersamples,images,usefinger,deb
         video = cv2.VideoCapture(cameraport)
 
     # Initialize the hand detector of mediapipe
-    if debug:
+    if nomediapipe:
         hands = None
     else:
         hands = mp.solutions.hands.Hands(
@@ -584,12 +584,12 @@ if __name__ == "__main__":
 
     parser.add_argument('--verbose','-v', action = 'store_true', help = 'Show information on terminal')
     parser.add_argument('--debug','-d', action = 'store_true', help = 'Debug mode (deactivate live feed)')
-
+    parser.add_argument('--nomediapipe', '-nm', action = 'store_true', help = 'Disable mediapipe utility on app')
 
     args = parser.parse_args()
 
     # Initialize the recognizer for the gestures
-    if args.debug:
+    if args.nomediapipe:
         recognizer = None
     else:
         base_options = python.BaseOptions(model_asset_path='gesture_recognizer.task')
@@ -601,4 +601,4 @@ if __name__ == "__main__":
     # if args.gathersamples:
     #     images = gs.takesamples(args.outputpath,args.saveframes,args.saveformat,args.cameraport,args.maxsamples,args.verbose+1,recognizer)
     
-    testgame(args.outputpath,args.saveformat,args.cameraport,args.gathersamples,images,args.usefinger,args.debug,recognizer)
+    testgame(args.outputpath,args.saveformat,args.cameraport,args.gathersamples,images,args.usefinger,args.debug,args.nomediapipe,recognizer)
