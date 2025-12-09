@@ -116,10 +116,12 @@ Por el momento no se ha encontrado solución (algunos ordenadores funcionan corr
 
 - MEJORAS GUI
 
-    1) Incorporar guardado de imágenes en la aplicación (Tiene que guardarse con cierta resolución, seguramente requiera duplicar imagen de lo que usa para mostrar en pantalla)
+    1) **PRIORIDAD** Añadir 2 pantallas más de cualquier forma
 
-    2) Añadir un sistema de páginas en la cuadricula de pantallas (Que se vaya rellenando y añadiendo páginas en caso de querer incorporar más imágenes. Usar teclas +/- para pasar páginas?)
+    2) Incorporar guardado de imágenes en la aplicación (Tiene que guardarse con cierta resolución, seguramente requiera duplicar imagen de lo que usa para mostrar en pantalla)
+
+    3) Añadir un sistema de páginas en la cuadricula de pantallas (Que se vaya rellenando y añadiendo páginas en caso de querer incorporar más imágenes. Usar teclas +/- para pasar páginas?)
  
-    3) Añadir pregunta directa en pantalla cuando haya una detección de gesto para confirmar (acknowledge)
+    4) Añadir pregunta directa en pantalla cuando haya una detección de gesto para confirmar (acknowledge)
  
-    4) Añadir un botón para permitir cambiar distribución de imágenes en una cuadrícula (un swap entre 2 imágenes)
+    5) Añadir un botón para permitir cambiar distribución de imágenes en una cuadrícula (un swap entre 2 imágenes)
