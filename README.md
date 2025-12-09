@@ -13,7 +13,7 @@ Permite al contenedor conectarse al servidor anfritión y poder lanzar GUIs:
 xhost +
 ```
 
-Descarga los ficheros necesarios y preparalos (No importa el lugar):
+Descarga los ficheros necesarios y preparalos (No importa el lugar, aunque se recomienda carpeta de Descargas):
 ```cmd
 git clone https://github.com/ekaitzduke/robotica-de-servicios -b app-gesture && mv robotica-de-servicios serv && mv serv/Dockerfile ./Dockerfile
 ```
@@ -62,6 +62,12 @@ Puedes probar a lanzar manualmente una acción de control con el siguiente coman
 ```cmd
 ros2 topic pub --once /comando_gesto std_msgs/Int8 '{data: 6}'
 ```
+
+Para actualizar un archivo de implementación (modificado desde la carpeta serv ahora encontrada en la carpeta de Descargas del SO host si se ha seguido la recomendación), usa el siguiente comando (donde file es el nombre del archivo, ej: rosGUI.py. En caso de variar la ruta en el host con varias carpetas en el propio volumen, cambia /serv por esta):
+```cmd
+cp /vgd/serv/file /ros2_Serv_ws/src/serv_proy/serv_proy/file
+```
+
 **NOTE: Falta hacer que la simulación o el launch funcione**
 <br/><br/>
 ## Problemas
