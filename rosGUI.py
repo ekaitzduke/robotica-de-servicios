@@ -15,6 +15,8 @@ import numpy as np             # To use arrays and linalg.form on finger calcula
 import rclpy
 from rclpy.node import Node
 
+from std_msgs.msg import Int8  # Message to communicate captured gesture to ros
+
 
 SCREENSIZE = (1000,600)  # Screen size of the game
 
@@ -437,7 +439,9 @@ class gestureGUI(Node):
 
         # Capture the video and read the first frame
         if not debug:
-            self.video = cv2.VideoCapture(cameraport)
+            self.video = cv2.VideoCaptur
+        
+        self._pub_gesture = None        # Future pointer to publisher handler of gestures
 
         # Initialize pygame modules and get the clock to set fps
         pygame.init()
@@ -565,6 +569,8 @@ class gestureGUI(Node):
 
     def detect_gesture_action(self,image,timer):
 
+        gest_detected = 0
+
         # Internal timer to avoid gesture/finger recognition each frame
         if timer > 0:
             timer -= 1
@@ -581,19 +587,32 @@ class gestureGUI(Node):
             for j in range(len(self.camaraPanel.displays)):
                 if curr_gesture == self.camaraPanel.text[j][0]:
                     self.camaraPanel.updatestates(j,2)
+
+                    gest_detected = j+1
                     # print(f'Gesture matched with action: {self.camaraPanel.text[j][1]}')
                     break
-
+            
+            timer = TIMER*GAMEFPS
+        else:
             timer = TIMER*GAMEFPS
 
         # Blink the selected gesture (After a fraction of the timer has passed)
-        if timer < TIMER*GAMEFPS*DELAYFRACTION:
+        if timer < TIMER*GAMEFPS*DELAYFRACTION and timer > TIMER*GAMEFPS*DELAYFRACTION-2:
             for k in range(len(self.camaraPanel.displays)):
                 if self.camaraPanel.states[k] == 2:
                     self.camaraPanel.states[k] += 1
 
+        return timer,gest_detected
+
     # -------- Main loop --------
     def run(self):
+
+        self._pub_gesture = self.create_publisher(Int8, '/comando_gesto', 10)
+        msg_gesture = Int8()
+        msg_gesture.data = int(6)
+        if self._pub_gesture:
+            self._pub_gesture.publish(msg_gesture)
+
         try:
             running = True   # Flag to shutdown pygame once it's running
 
@@ -619,7 +638,14 @@ class gestureGUI(Node):
 
                 self.draw_GUI(image)
 
-                self.detect_gesture_action(image,timer)
+                timer,gest_detected = self.detect_gesture_action(image,timer)
+
+                if gest_detected > 0:
+                    msg_gesture = Int8()
+                    msg_gesture.data = int(gest_detected)
+                    if self._pub_gesture:
+                        self._pub_gesture.publish(msg_gesture)
+
 
                 self.clock.tick(GAMEFPS)
 
@@ -628,6 +654,10 @@ class gestureGUI(Node):
             if not self.debug:
                 self.video.release()
             pygame.quit()
+
+            if self._pub_gesture:
+                self._pub_gesture.publish(Int8())
+
             self.get_logger().info("Closing gestureGUI...")
 
 
