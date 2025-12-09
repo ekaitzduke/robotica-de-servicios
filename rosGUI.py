@@ -439,7 +439,7 @@ class gestureGUI(Node):
 
         # Capture the video and read the first frame
         if not debug:
-            self.video = cv2.VideoCapture(cameraport)
+            self.video = cv2.VideoCaptur
         
         self._pub_gesture = None        # Future pointer to publisher handler of gestures
 
@@ -463,6 +463,7 @@ class gestureGUI(Node):
         # Create live camera and static display panel
         self.camara = ScreenDisplay(CAMARAINITIALPOS,CAMARAINITIALDIM)
         self.camaraPanel = ScreenDisplayPanel(DISPLAYINITIALPOS,DISPLAYINITIALDIM,DISPLAYOFFSET,DISPLAYDISTRIB,DISPLAYSELCOLOR)
+        self.acknowledgeButton = ScreenDisplay([0,0],[100,50])
 
         # Update display with stored images
         for i in range(DISPLAYDISTRIB[0]*DISPLAYDISTRIB[1]):
@@ -483,7 +484,9 @@ class gestureGUI(Node):
 
 
     # -------- Pygame event handler --------
-    def handle_events(self,event,image,success):
+    def handle_events(self,event,image,success,expect_acknowledge):
+
+        confirm_acknowledge = False
 
         # Quitting
         if event.type == pygame.QUIT or not success:
@@ -506,6 +509,8 @@ class gestureGUI(Node):
                 if self.camara.pressed(pos):
                     self.camaraPanel.updatestates()
                     self.camara.adapt(CAMARAZOOMEDDIM,CAMARAZOOMEDPOS)
+                elif self.acknowledgeButton.pressed(pos) and expect_acknowledge:
+                    confirm_acknowledge = True
 
         # All keybinds events
         elif event.type == pygame.KEYDOWN:
@@ -513,7 +518,7 @@ class gestureGUI(Node):
 
             # Quit the game by a keypress
             if key[SHUTDOWNKEY]:
-                return False
+                return False, confirm_acknowledge
 
             # Events only available on zoomed camera mode
             elif self.camara.dim[0] == CAMARAZOOMEDDIM[0] and self.camara.dim[1] == CAMARAZOOMEDDIM[1]:
@@ -546,11 +551,11 @@ class gestureGUI(Node):
                 self.camaraPanel.updatestates()
                 self.camara.adapt(CAMARAZOOMEDDIM,CAMARAZOOMEDPOS)
 
-        return True
+        return True, confirm_acknowledge
 
 
     # -------- Printing GUI --------
-    def draw_GUI(self,image):
+    def draw_GUI(self,image, expect_acknowledge):
         self.screen.fill((0,0,0))    # Clean the screen
 
         self.camara.update(image,SCREENSIZE) # Update live camera
@@ -558,6 +563,9 @@ class gestureGUI(Node):
         # Draw cameras on screen
         self.camara.draw(self.screen)
         self.camaraPanel.draw(self.screen)
+        
+        if expect_acknowledge:
+            self.acknowledgeButton.draw(self.screen)
 
         # Print info for the user to know keybinds and controls
         for i in range(len(self.infotexts)):
@@ -570,6 +578,7 @@ class gestureGUI(Node):
     def detect_gesture_action(self,image,timer):
 
         gest_detected = 0
+        expect_acknowledge = False
 
         # Internal timer to avoid gesture/finger recognition each frame
         if timer > 0:
@@ -589,11 +598,14 @@ class gestureGUI(Node):
                     self.camaraPanel.updatestates(j,2)
 
                     gest_detected = j+1
+                    expect_acknowledge = True
                     # print(f'Gesture matched with action: {self.camaraPanel.text[j][1]}')
                     break
             
             timer = TIMER*GAMEFPS
         else:
+            gest_detected = 1
+            expect_acknowledge = True
             timer = TIMER*GAMEFPS
 
         # Blink the selected gesture (After a fraction of the timer has passed)
@@ -602,12 +614,12 @@ class gestureGUI(Node):
                 if self.camaraPanel.states[k] == 2:
                     self.camaraPanel.states[k] += 1
 
-        return timer,gest_detected
+        return gest_detected,timer,expect_acknowledge
 
     # -------- Main loop --------
-    def run(self):
+    def run(self, gest_pub_topic):
 
-        self._pub_gesture = self.create_publisher(Int8, '/comando_gesto', 10)
+        self._pub_gesture = self.create_publisher(Int8, gest_pub_topic, 10)
         msg_gesture = Int8()
         msg_gesture.data = int(6)
         if self._pub_gesture:
@@ -615,6 +627,8 @@ class gestureGUI(Node):
 
         try:
             running = True   # Flag to shutdown pygame once it's running
+            expect_acknowledge = False
+            confirm_acknowledge = False
 
             # To keep node running without live feed
             if self.debug:
@@ -632,15 +646,19 @@ class gestureGUI(Node):
                     success,image = self.video.read()
 
                 for event in pygame.event.get():
-                    running = self.handle_events(event,image,success)
+                    running, confirm_acknowledge = self.handle_events(event,image,success,expect_acknowledge)
                     if not running:
                         break
 
-                self.draw_GUI(image)
+                self.draw_GUI(image, expect_acknowledge)
 
-                timer,gest_detected = self.detect_gesture_action(image,timer)
+                if not expect_acknowledge:
+                    gest_detected,timer,expect_acknowledge = self.detect_gesture_action(image,timer)
 
-                if gest_detected > 0:
+                # Send message of the gesture detected
+                if gest_detected > 0 and confirm_acknowledge:
+                    expect_acknowledge = False
+                    confirm_acknowledge = False
                     msg_gesture = Int8()
                     msg_gesture.data = int(gest_detected)
                     if self._pub_gesture:
@@ -655,6 +673,7 @@ class gestureGUI(Node):
                 self.video.release()
             pygame.quit()
 
+            # Send a 0 as gesture detected (To notice app closing to the controller)
             if self._pub_gesture:
                 self._pub_gesture.publish(Int8())
 
@@ -670,6 +689,8 @@ def main():
     parser.add_argument('--usefinger', '-ug', action = 'store_false', help = 'Use finger detection instead of gesture')
     parser.add_argument('--cameraport', '-cp', type=int, default = 0, help = 'Camera port used')
     parser.add_argument('--saveformat', '-sf', type=str, default = 'jpg', help = 'Saved frames format')
+
+    parser.add_argument('--pubgesttopic', '-pgt', type = str, default = '/comando_gesto', help = 'Topic string where gesture matching will be published')
 
     parser.add_argument('--verbose','-v', action = 'store_true', help = 'Show information on terminal')
     parser.add_argument('--debug','-d', action = 'store_true', help = 'Debug mode (deactivate live feed)')
@@ -689,7 +710,7 @@ def main():
     rclpy.init()
     node = gestureGUI(args.outputpath,args.saveformat,args.cameraport,args.usefinger,args.debug,recognizer)
     try:
-        node.run()
+        node.run(args.pubgesttopic)
     except KeyboardInterrupt:
         pass
     finally:
