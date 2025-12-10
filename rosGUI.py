@@ -56,7 +56,7 @@ DISPLAYSELECTKEYS = [pygame.K_1,pygame.K_2,pygame.K_3,pygame.K_4,pygame.K_5,pyga
 SHUTDOWNKEY = pygame.K_q      # Quit the game
 
  # Orders to send when the corresponding screen match
-ACTIONTEXT = ["Undefined", "Confirm", "Dish1", "Dish2", "Dish3", "Dish4", "Complain", "Bill", "Wifi"]
+ACTIONTEXT = ["Undefined", "Call", "Confirm", "Bill", "Complain", "Dish1", "Dish2", "Dish3", "Dish4"]
 
 # Labels used by the classifier
 MPGESID = ["None", "Pointing_Up", "Thumb_Up", "Closed_Fist", "Thumb_Down", "Open_Palm", "Victory", "ILoveYou"]
