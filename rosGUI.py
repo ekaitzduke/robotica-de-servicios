@@ -704,7 +704,7 @@ def main():
 
     parser = argparse.ArgumentParser(description='Program to take frames from a camera in real-time.',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('--inputpath', '-out', type=str, default = 'Imagenes', help = 'Path to the folder where panel frames are stored')
+    parser.add_argument('--inputpath', '-in', type=str, default = 'Imagenes', help = 'Path to the folder where panel frames are stored')
     parser.add_argument('--usefinger', '-ug', action = 'store_false', help = 'Use finger detection instead of gesture')
     parser.add_argument('--cameraport', '-cp', type=int, default = 0, help = 'Camera port used')
     parser.add_argument('--saveformat', '-sf', type=str, default = 'jpg', help = 'Saved frames format')
