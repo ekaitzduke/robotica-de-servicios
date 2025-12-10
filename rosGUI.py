@@ -228,14 +228,18 @@ class ScreenDisplayPanel():
         # (Order from left to right, then top to bottom once the current row is exhausted)
         self.displays = []
 
+        # Storage for the image data, for saving purposes
+        self.storage = []
+
         # Fixed screen surface used for each screen instance as base
         self.selrect = pygame.Surface((self.dim[0]+self.selwidth*2,self.dim[1]+self.selwidth*2))
 
-        # Initialize each screen object
+        # Initialize each screen object and the image storage
         for i in range(size[1]):
             for j in range(size[0]):
                 screenpos = [pos[0] + (self.dim[0]+ offsets[0])*j, pos[1] + (self.dim[1]+ offsets[1])*i]
                 self.displays.append(ScreenDisplay(screenpos,self.dim))
+                self.storage.append(None)
 
         # Set states values (would be set to 0 if no data is given for the expected screen)
         if not states:
@@ -288,11 +292,13 @@ class ScreenDisplayPanel():
                 screen.blit(disptext, [wtextpos,htextpos])
 
     # Same as update method of class ScreenDisplay, but aimed for an specific screen (screenNum, expected as integer)
+    # (Also stores the data image on storage variable)
     def update(self,image,screenDim,screenNum=0):
         if (min(self.pos) >= 0) and (self.pos[0] + self.dim[0] <= screenDim[0]) and (self.pos[1] + self.dim[1] <= screenDim[1]):
             screenNum = max(0, screenNum)
             screenNum = min(len(self.displays)-1, screenNum)
             self.displays[screenNum].update(image,screenDim)
+            self.storage[screenNum] = image
 
     # Same as pressed method of class ScreenDisplay, but also changes the state of the pressed screen to statevalue 
     # (Erases all the others values. If no screen is pressed, all values would be erased)
@@ -414,7 +420,7 @@ def getFingerstrfromImage(image,hands):
 
 class gestureGUI(Node):
 
-    def __init__(self,displaypath,imgformat,cameraport,usefinger,debug,nomediapipe,recognizer):
+    def __init__(self,displaypath,savepath,imgformat,cameraport,saveframes,usefinger,debug,nomediapipe,recognizer):
         super().__init__("gestureGUI")
 
         self.usefinger = usefinger
@@ -442,6 +448,11 @@ class gestureGUI(Node):
             self.video = cv2.VideoCapture(cameraport)
         
         self._pub_gesture = None        # Future pointer to publisher handler of gestures
+
+        # Needed data to save images later if requested
+        self.saveframes = saveframes
+        self.savepath = savepath
+        self.imgformat = imgformat
 
         # Initialize pygame modules and get the clock to set fps
         pygame.init()
@@ -677,6 +688,15 @@ class gestureGUI(Node):
             if self._pub_gesture:
                 self._pub_gesture.publish(Int8())
 
+            if os.path.exists(f'{self.savepath}') and self.saveframes:
+                i = 0
+                for image in self.camaraPanel.storage:
+                    if image is not None:
+                        cv2.imwrite(f'{self.savepath}/{i}.{self.imgformat}',image)
+                    else:
+                        print(f'Saving of image {i} failed')
+                    i += 1
+
             self.get_logger().info("Closing gestureGUI...")
 
 
@@ -684,11 +704,13 @@ def main():
 
     parser = argparse.ArgumentParser(description='Program to take frames from a camera in real-time.',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('--outputpath', '-out', type=str, default = 'Imagenes', help = 'Path to the folder to store frames')
-    parser.add_argument('--saveframes', '-sfr', action = 'store_true', help = 'Save the frame on the outputpath')
+    parser.add_argument('--inputpath', '-out', type=str, default = 'Imagenes', help = 'Path to the folder where panel frames are stored')
     parser.add_argument('--usefinger', '-ug', action = 'store_false', help = 'Use finger detection instead of gesture')
     parser.add_argument('--cameraport', '-cp', type=int, default = 0, help = 'Camera port used')
     parser.add_argument('--saveformat', '-sf', type=str, default = 'jpg', help = 'Saved frames format')
+
+    parser.add_argument('--outputpath', '-out', type=str, default = 'SavedImages', help = 'Path to the folder to store the new frames')
+    parser.add_argument('--saveframes', '-sfr', action = 'store_true', help = 'Save the frame on the outputpath')
 
     parser.add_argument('--pubgesttopic', '-pgt', type = str, default = '/comando_gesto', help = 'Topic string where gesture matching will be published')
 
@@ -709,7 +731,7 @@ def main():
 
 
     rclpy.init()
-    node = gestureGUI(args.outputpath,args.saveformat,args.cameraport,args.usefinger,args.debug,args.nomediapipe,recognizer)
+    node = gestureGUI(args.inputpath,args.outputpath,args.saveformat,args.cameraport,args.saveframes,args.usefinger,args.debug,args.nomediapipe,recognizer)
     try:
         node.run(args.pubgesttopic)
     except KeyboardInterrupt:
