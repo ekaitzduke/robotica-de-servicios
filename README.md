@@ -79,7 +79,7 @@ python3 -m venv mp_env --system-site-packages --symlinks && . mp_env/bin/activat
 ```
 
 ```cmd
-mkdir -p ros2_yasmin_ws/src && cd ros2_yasmin_ws/src && git clone --branch 3.5.1 https://github.com/uleroboticsgroup/yasmin.git && colcon build && source ../install/setup.bash
+mkdir -p ros2_yasmin_ws/src && cd ros2_yasmin_ws/src && git clone --branch 3.5.1 https://github.com/uleroboticsgroup/yasmin.git && cd .. && colcon build && source install/setup.bash
 ```
 
 Activar yasmin viewer
