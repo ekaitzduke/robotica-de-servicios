@@ -31,17 +31,17 @@ class WanderState(State):
     def execute(self, blackboard: Blackboard) -> str:
         print(f"→ Wandering")
 
-        self._sub_gesture = self.create_subscription(Int8, '/comando_gesto', self.gesture_callback, 10)
-        self._pub_vel = self.create_publisher(Twist, '/cmd_vel_unstamped', 10)
+        self._sub_gesture = self._node.create_subscription(Int8, '/comando_gesto', self.gesture_callback, 10)
+        self._pub_vel = self._node.create_publisher(Twist, '/cmd_vel_unstamped', 10)
 
-        while rclpy.ok() and self.current_gesture is not 1:
+        while rclpy.ok() and self.current_gesture != 1:
             rclpy.spin_once(self._node, timeout_sec=0.1)
 
         if self._sub_gesture:
             self._node.destroy_subscription(self._sub_gesture)
             self._sub_gesture = None
 
-        self.get_logger().info("✋ 'CALL_ROBOT' recibido -> Acercándose...")
+        self._node.get_logger().info("✋ 'CALL_ROBOT' recibido -> Acercándose...")
         self.current_gesture = 0
         self._node.set_parameters([rclpy.parameter.Parameter('current_gesture',rclpy.Parameter.Type.INTEGER,0)])
         print("  Wandering → Approaching")
@@ -51,7 +51,7 @@ class WanderState(State):
         """Función que se activa al recibir un comando por teclado."""
         # Convierte el número recibido (msg.data) al Enum Gesture correspondiente
         self.current_gesture = msg.data
-        self.get_logger().info(f"⌨️ Comando recibido: {msg.data}")
+        self._node.get_logger().info(f"⌨️ Comando recibido: {msg.data}")
 
         cmd = Twist()
         cmd.linear.x = 0.3   # Velocidad hacia adelante
@@ -66,14 +66,14 @@ class WanderState(State):
 # Approach State: Robot approaches the customer (then goes to recognize)
 class ApproachState(State):
     def __init__(self, node):
-        super().__init__(outcomes={'approach'})
+        super().__init__(outcomes={'recognize'})
         self._node =  node
 
         self._pub_vel = None
         self.buffer = Buffer()
-        self.listener = TransformListener(self.buffer, self)
+        self.listener = TransformListener(self.buffer, self._node)
 
-        self.create_timer(1, self.tick)
+        self._node.create_timer(0.1, self.tick)
 
         self.reached = False
         self.steps_counter = 0
@@ -81,12 +81,12 @@ class ApproachState(State):
     def execute(self, blackboard: Blackboard) -> str:
         print(f"→ Approaching")
 
-        self._pub_vel = self.create_publisher(Twist, '/cmd_vel_unstamped', 10)
+        self._pub_vel = self._node.create_publisher(Twist, '/cmd_vel_unstamped', 10)
 
         while rclpy.ok() and not self.reached:
             rclpy.spin_once(self._node, timeout_sec=0.1)
 
-        self.get_logger().info("🛑 Llegada al cliente. Esperando orden (RECOGNIZE).")
+        self._node.get_logger().info("🛑 Llegada al cliente. Esperando orden (RECOGNIZE).")
         print("  Approaching → Recognize")
         return 'recognize'
 
@@ -128,22 +128,23 @@ class RecognizeState(State):
     def execute(self, blackboard: Blackboard) -> str:
         print(f"→ Recognize")
 
-        self._pub_vel = self.create_publisher(Twist, '/cmd_vel_unstamped', 10)
-        self._sub_gesture = self.create_subscription(Int8, '/comando_gesto', self.gesture_callback, 10)
+        self._pub_vel = self._node.create_publisher(Twist, '/cmd_vel_unstamped', 10)
+        self._sub_gesture = self._node.create_subscription(Int8, '/comando_gesto', self.gesture_callback, 10)
+        self.current_gesture = self._node.get_parameter('current_gesture').value
 
         cmd = Twist()
         cmd.linear.x = 0.0   # Velocidad hacia adelante
         cmd.angular.z = 0.0  # Velocidad de giro
-
-        if self._pub_vel:
-            self._pub_vel.publish(cmd)
-            self._node.destroy_subscription(self._sub_gesture)
-            self._sub_gesture = None
+        self._pub_vel.publish(cmd)
 
         while rclpy.ok() and self.current_gesture < 1:
             rclpy.spin_once(self._node, timeout_sec=0.1)
 
-        self.get_logger().info(f"✅ Gesto {self.current_gesture} entendido.")
+        if self._sub_gesture:
+            self._node.destroy_subscription(self._sub_gesture)
+            self._sub_gesture = None
+
+        self._node.get_logger().info(f"✅ Gesto {self.current_gesture} entendido.")
 
         print("  Recognize → Task")
         return 'task'
@@ -152,7 +153,7 @@ class RecognizeState(State):
         """Función que se activa al recibir un comando por teclado."""
         # Convierte el número recibido (msg.data) al Enum Gesture correspondiente
         self.current_gesture = msg.data
-        self.get_logger().info(f"⌨️ Comando recibido: {msg.data}")
+        self._node.get_logger().info(f"⌨️ Comando recibido: {msg.data}")
         self._node.set_parameters([rclpy.parameter.Parameter('current_gesture',rclpy.Parameter.Type.INTEGER,msg.data)])
 
 
@@ -171,18 +172,23 @@ class TaskState(State):
         print(f"→ Task")
 
         if current_gesture == 2:
-            self.get_logger().info("✅ Pedido completado, regresando a WANDER.")
+            self._node.get_logger().info("✅ Pedido completado, regresando a WANDER.")
             return 'wander'
         elif current_gesture == 3:
-            self.get_logger().info("💳 Cliente pidió la cuenta.")
+            self._node.get_logger().info("💳 Cliente pidió la cuenta.")
+            time.sleep(2)
         elif current_gesture == 4:
-            self.get_logger().info("📄 Entregando hoja de reclamaciones.")
-        elif current_gesture > 4 and self.current_gesture < 9:
-            self.get_logger().info("🍽️ Pedido recibido, ejecutando...")
+            self._node.get_logger().info("📄 Entregando hoja de reclamaciones.")
+            time.sleep(2)
+        elif current_gesture > 4 and current_gesture < 9:
+            self._node.get_logger().info("🍽️ Pedido recibido, ejecutando...")
+            time.sleep(2)
         else:
             # Esto maneja el caso de que se haya recibido un 1 (CALL_ROBOT) mientras ya estaba aquí.
-            self.get_logger().info("❓ Gesto ambiguo o no ejecutable. Haga un gesto correcto.")
-            
+            self._node.get_logger().info("❓ Gesto ambiguo o no ejecutable. Haga un gesto correcto.")
+        
+        self._node.set_parameters([rclpy.parameter.Parameter('current_gesture',rclpy.Parameter.Type.INTEGER,0)])
+
         print("  Task → Recognize")
         return 'recognize'
 
@@ -190,6 +196,7 @@ class TaskState(State):
 
 
 def main(args=None):
+    logging.disable(logging.INFO)
     rclpy.init(args=args)
     node = Node('waiter_robot')
     wanderState = WanderState(node)
