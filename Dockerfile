@@ -82,18 +82,19 @@ RUN cd /ros2_Serv_ws && . /opt/ros/jazzy/setup.sh && colcon build --symlink-inst
 # RUN cd /ros2_Serv_ws/src/serv_proy && head -n 26 setup.py > setup2.py
 RUN cd /ros2_Serv_ws/src/serv_proy && echo 'import os' > setup2.py && echo 'from glob import glob' >> setup2.py && head -n 12 setup.py >> setup2.py
 RUN cd /ros2_Serv_ws/src/serv_proy && echo "        (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*.launch.py')))," >> setup2.py && tail -n 17 setup.py | head -n 14 >> setup2.py
-RUN cd /ros2_Serv_ws/src/serv_proy && echo "            'rosGUI = serv_proy.rosGUI:main'," >> setup2.py && echo "            'turte = serv_proy.turte:main'" >> setup2.py && tail -n 3 setup.py >> setup2.py && mv setup2.py setup.py
+RUN cd /ros2_Serv_ws/src/serv_proy && echo "            'rosGUI = serv_proy.rosGUI:main'," >> setup2.py && echo "            'turte = serv_proy.turte:main'," >> setup2.py && echo "            'turte_fsm = serv_proy.turte_fsm:main'" >> setup2.py && tail -n 3 setup.py >> setup2.py && mv setup2.py setup.py
 
 
 
 RUN cd /ros2_Serv_ws/src/serv_proy && echo "[options.entry_points]" >> setup.cfg && echo "console_scripts = " >> setup.cfg
-RUN cd /ros2_Serv_ws/src/serv_proy && echo "    rosGUI = serv_proy.rosGUI:main" >> setup.cfg && echo "    turte = serv_proy.turte:main" >> setup.cfg
+RUN cd /ros2_Serv_ws/src/serv_proy && echo "    rosGUI = serv_proy.rosGUI:main" >> setup.cfg && echo "    turte = serv_proy.turte:main" >> setup.cfg && echo "    turte_fsm = serv_proy.turte_fsm:main" >> setup.cfg
 
 RUN cd /ros2_Serv_ws/src/serv_proy && mkdir launch
 
 # COPY ./serv/setup.py /ros2_Serv_ws/src/serv_proy/setup.py
 COPY ./serv/rosGUI.py /ros2_Serv_ws/src/serv_proy/serv_proy/rosGUI.py
 COPY ./serv/turte.py /ros2_Serv_ws/src/serv_proy/serv_proy/turte.py
+COPY ./serv/turte_fsm.py /ros2_Serv_ws/src/serv_proy/serv_proy/turte_fsm.py
 COPY ./serv/run.launch.py /ros2_Serv_ws/src/serv_proy/launch/run.launch.py
 COPY ./serv/gesture_recognizer.task /ros2_Serv_ws/gesture_recognizer.task
 RUN cd /ros2_Serv_ws && . /opt/ros/jazzy/setup.sh && colcon build --symlink-install
