@@ -125,3 +125,33 @@ Por el momento no se ha encontrado solución (algunos ordenadores funcionan corr
     4) Añadir pregunta directa en pantalla cuando haya una detección de gesto para confirmar (acknowledge)
  
     5) Añadir un botón para permitir cambiar distribución de imágenes en una cuadrícula (un swap entre 2 imágenes)
+ 
+   
+## MARIO
+
+Instalar el mvsim:
+
+```cmd
+apt-get update && apt-get install -y ros-jazzy-mvsim
+```
+
+Prueba que se ha instalado todo con el mundo de prueba de turtlebot:
+
+```cmd
+ros2 launch mvsim demo_turtlebot_world.launch.py
+```
+
+Repositorio a las prácticas de móviles: <br/>
+https://github.com/ottocol/robots_moviles_25_26/tree/main
+
+Tienes un archivo xml simple con unos muros y objetos (prac1.world.xml), lanzalo así (si lo tienes en la carpeta actual, sino dale el path en world_file):
+
+```cmd
+ros2 launch mvsim launch_world.launch.py world_file:=prac1.world.xml
+```
+
+<br/> Te carga el rviz por defecto, dale el parámetro **use_rviz:=false** para tener solo el simulador:
+
+```cmd
+ros2 launch mvsim launch_world.launch.py world_file:=prac1.world.xml use_rviz:=false
+```
