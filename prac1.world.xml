@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<mvsim_world>
+  <gui>
+  </gui>
+
+
+  <element class="ground_grid">
+    <interval>1.0</interval>
+  </element>
+
+  <!-- robot-->
+  <include file="$(ros2 pkg prefix mvsim)/share/mvsim/definitions/small_robot.vehicle.xml"/>
+  <vehicle name="robot1" class="small_robot">
+		<init_pose>0 0 0</init_pose>  <!-- In global coords: x,y, yaw(deg) -->
+		<init_vel>0 0 0</init_vel>  <!-- In local coords: vx,vy, omega(deg/s) -->
+
+
+		<!-- Sensors -->
+    <!--
+		<include file="$(ros2 pkg prefix mvsim)/share/mvsim/definitions/rgbd_camera.sensor.xml" 
+		  sensor_x="0.65"  sensor_y="0" sensor_z="0.5"
+		  sensor_period_sec="0.10"
+		  />
+    -->
+    <include file="$(ros2 pkg prefix mvsim)/share/mvsim/definitions/lidar2d.sensor.xml" 
+		  sensor_x="0.65" sensor_y="0" sensor_z="0.30" sensor_yaw="0" sensor_name="scan_raw" raytrace_3d="true" 
+		  sensor_period_sec="0.10" viz_visibleLines="false" sensor_nrays="300" fov_degrees="180"
+		/>
+	</vehicle>
+
+
+  <block:class name="cone">
+		<static>true</static> <!-- Does not move -->
+    <color>#0080ff</color>
+		<shape_from_visual/> <!-- automatic shape,zmin,zmax from 3D mesh-->
+		<!--  Custom visualization model. 3D model filename to load (local or remote http://uri ) -->
+		<visual>
+			<model_uri>https://mrpt.github.io/mvsim-models/ConstructionCone.zip/ConstructionCone/construction_cone.dae</model_uri>
+      <model_roll>90</model_roll>
+      <model_scale>5.0</model_scale>
+    </visual>
+  </block:class>
+
+  <block:class name="trash-can">
+		<static>true</static> <!-- Does not move -->
+    <color>#0080ff</color>
+		<shape_from_visual/> <!-- automatic shape,zmin,zmax from 3D mesh-->
+		<!--  Custom visualization model. 3D model filename to load (local or remote http://uri ) -->
+		<visual>
+			<model_uri>https://mrpt.github.io/mvsim-models/trash-can-01.zip/trash-can-01/trash_can_01.dae</model_uri>
+      <model_roll>90</model_roll>
+    </visual>
+  </block:class>
+
+  <block class="cone">
+    <init_pose>-1 10 0</init_pose>
+  </block>
+
+  <block class="cone">
+    <init_pose>5 1 0</init_pose>
+  </block>
+
+  <block class="cone">
+    <init_pose>10 2 0</init_pose>
+  </block>
+
+  <block class="cone">
+    <init_pose>7 7 0</init_pose>
+  </block>
+
+  <block class="cone">
+    <init_pose>3 3 0</init_pose>
+  </block>
+
+  <block class="cone">
+    <init_pose>-5 -5 0</init_pose>
+  </block>
+
+  <block class="cone">
+    <init_pose>-8 3 0</init_pose>
+  </block>
+
+  <block class="trash-can">
+    <init_pose>-10 10 0</init_pose>
+  </block>
+
+
+  <block class="trash-can">
+    <init_pose>-8 -10 0</init_pose>
+  </block>
+
+  <element class="vertical_plane">
+      <x0>15</x0> <y0>15</y0>
+      <x1>15</x1> <y1>-15</y1>
+      <z>0.0</z> <height>2.500</height>
+      <color>#707070</color>
+  </element>
+  <element class="vertical_plane">
+      <x0>15</x0> <y0>15</y0>
+      <x1>-15</x1> <y1>15</y1>
+      <z>0.0</z> <height>2.500</height>
+      <color>#990000</color>
+  </element>
+  <element class="vertical_plane">
+      <x0>-15</x0> <y0>15</y0>
+      <x1>-15</x1> <y1>-15</y1>
+      <z>0.0</z> <height>2.500</height>
+      <color>#009900</color>
+  </element>
+  <element class="vertical_plane">
+      <x0>-15</x0> <y0>-15</y0>
+      <x1>15</x1> <y1>-15</y1>
+      <z>0.0</z> <height>2.500</height>
+      <color>#000099</color>
+  </element>
+
+</mvsim_world>  
